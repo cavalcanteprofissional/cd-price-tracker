@@ -53,7 +53,7 @@ cd-price-tracker/
 │   │   └── supabase.ts            # client Supabase anon key (Server Components)
 │   ├── next.config.js
 │   ├── package.json
-│   └── .env.local.example
+│   └── .env.example
 │
 ├── tests/
 │   ├── test_filter.py             # pytest: validar is_suspected_fanmade

@@ -48,6 +48,6 @@
 - `package.json` — dependências Next.js (next, react, recharts, @supabase/supabase-js, resend)
 - `tsconfig.json` — configuração TypeScript estrita
 - `next.config.js` — remotePatterns para imagens externas
-- `.env.example` / `.env.local.example` — templates de variáveis de ambiente
+- `.env.example` — templates de variáveis de ambiente
 - `.python-version` — Python 3.12
 - `.gitignore` — node_modules, .next, __pycache__, .env
