@@ -1,0 +1,47 @@
+[
+  {
+    "title": "Thriller",
+    "artist": "Michael Jackson",
+    "cover_url": null,
+    "platforms": [
+      { "platform": "amazon", "amazon_url": "https://www.amazon.com.br/dp/B001234567" },
+      { "platform": "mercado_livre", "search_query": "thriller michael jackson cd original" },
+      { "platform": "shopee", "search_query": "thriller michael jackson cd" }
+    ]
+  },
+  {
+    "title": "Abbey Road",
+    "artist": "The Beatles",
+    "cover_url": null,
+    "platforms": [
+      { "platform": "amazon", "amazon_url": "https://www.amazon.com.br/dp/B000123456" },
+      { "platform": "mercado_livre", "search_query": "abbey road beatles cd original" }
+    ]
+  },
+  {
+    "title": "The Dark Side of the Moon",
+    "artist": "Pink Floyd",
+    "cover_url": null,
+    "platforms": [
+      { "platform": "mercado_livre", "search_query": "dark side of the moon pink floyd cd" },
+      { "platform": "shopee", "search_query": "dark side of the moon pink floyd cd" }
+    ]
+  },
+  {
+    "title": "Nevermind",
+    "artist": "Nirvana",
+    "cover_url": null,
+    "platforms": [
+      { "platform": "amazon", "amazon_url": "https://www.amazon.com.br/dp/B000987654" },
+      { "platform": "mercado_livre", "search_query": "nevermind nirvana cd original" }
+    ]
+  },
+  {
+    "title": "OK Computer",
+    "artist": "Radiohead",
+    "cover_url": null,
+    "platforms": [
+      { "platform": "shopee", "search_query": "ok computer radiohead cd" }
+    ]
+  }
+]

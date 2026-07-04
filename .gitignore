@@ -1,0 +1,7 @@
+node_modules/
+.next/
+*.pyc
+__pycache__/
+.env
+.env.local
+.pytest_cache/
