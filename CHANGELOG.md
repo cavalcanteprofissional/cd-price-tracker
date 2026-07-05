@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.3.0] — 2026-07-05
+
+### Adicionado
+
+#### Infraestrutura (Supabase)
+- Projeto Supabase free tier criado
+- `supabase/schema.sql` — arquivo SQL com CREATE TABLEs + índices
+- `supabase/rls.sql` — arquivo SQL com RLS policies
+- `supabase/seed.sql` — INSERTs dos 5 CDs enriquecidos com metadados Last.fm
+- Schema + RLS + seed aplicados no Supabase via MCP
+- Variáveis de ambiente configuradas localmente
+
+## [0.2.0] — 2026-07-05
+
+### Adicionado
+
+#### Validação de Álbuns (Last.fm API)
+- `seed/validate_albums.py` — script de validação e enriquecimento de álbuns via Last.fm API
+  - Busca cada CD do seed via `album.search` + `album.getInfo`
+  - Score de similaridade (token overlap) para match inteligente
+  - Enriquece com `lastfm_url`, `release_date`, `genre` (top 5 tags), `cover_url`, `lastfm_listeners`
+  - Gera `seed/products_enriched.json` com dados validados
+  - Loga warnings para álbuns não encontrados ou baixa confiança
+
+#### Schema do banco
+- Novas colunas na tabela `products`: `lastfm_url`, `release_date`, `genre`, `lastfm_listeners`
+
+#### Configuração
+- Variável `LASTFM_API_KEY` nos `.env.example`
+
+#### Documentação
+- Passo a passo de obtenção da API Key do Last.fm no skill
+- Seção de validação de álbuns no skill
+
 ## [0.1.0] — 2026-07-03
 
 ### Adicionado

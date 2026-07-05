@@ -1,3 +1,5 @@
+"use client";
+
 interface PriceItem {
   platform: string;
   price: number;

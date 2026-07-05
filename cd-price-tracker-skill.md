@@ -119,6 +119,59 @@ GitHub Actions (cron semanal, toda segunda 09:00 BRT, timeout 30min)
 8. Como a lista de CDs é fixa e todo mundo recebe o mesmo digest, **não existe tabela de assinatura por produto** nesta versão — todo `subscriber` confirmado recebe o resumo semanal completo. (Deixe o schema fácil de estender para isso no futuro, mas não implemente agora.)
 9. **Unsubscribe é tratado via token próprio** (não apenas respondendo email). Cada subscriber recebe um `unsubscribe_token` gerado no cadastro.
 
+## Validação de Álbuns via Last.fm API
+
+Antes de popular o banco com a lista de CDs, cada álbum é validado contra o catálogo do Last.fm para garantir que é um lançamento legítimo e enriquecer os metadados.
+
+A API do Last.fm é 100% gratuita, sem necessidade de Premium. Basta criar uma conta e gerar uma API Key.
+
+### Como obter a API Key do Last.fm (passo a passo)
+
+1. Crie uma conta em https://www.last.fm (se não tiver)
+2. Acesse https://www.last.fm/api/account/create
+3. Preencha:
+   - **Application name:** `cd-price-tracker`
+   - **Application description:** `Validação de álbuns para monitoramento de preços de CDs`
+4. Marque a opção "I have read and agree to the Last.fm API Terms of Service"
+5. Clique em **"Submit"**
+6. Copie a **API Key** gerada (uma string de ~32 caracteres alfanuméricos)
+7. Adicione no arquivo `scraper/.env`:
+   ```
+   LASTFM_API_KEY=sua_chave_aqui
+   ```
+
+### Script de validação
+
+`seed/validate_albums.py` — lê `seed/products.json`, consulta a Last.fm API para cada álbum, e gera `seed/products_enriched.json` com:
+
+| Campo | Descrição |
+|---|---|
+| `lastfm_url` | URL do álbum no Last.fm |
+| `cover_url` | Capa do álbum (maior resolução disponível) |
+| `release_date` | Data de lançamento (via wiki, se disponível) |
+| `genre` | Top 5 tags do álbum |
+| `lastfm_listeners` | Número de ouvintes |
+
+### Algoritmo de validação
+
+1. Para cada CD em `products.json`, busca no Last.fm: `album.search` com `{artist} {title}`
+2. Calcula **score de similaridade** (token overlap) para cada resultado:
+   - Peso: 60% título + 40% artista
+3. Se score >= 0.6 → match automático, tenta `album.getInfo` para dados completos
+4. Se score < 0.6 → loga warning com candidatos para revisão manual
+5. Álbuns não encontrados também vão para revisão manual
+
+### Uso
+
+```bash
+pip install -r scraper/requirements.txt   # se ainda não instalou
+python -m seed.validate_albums
+```
+
+### Integração com o pipeline
+
+O `products_enriched.json` serve como fonte de verdade para o seed do Supabase. Os campos `lastfm_url`, `release_date`, `genre` e `cover_url` são persistidos na tabela `products` e podem ser usados no frontend para exibição enriquecida (capa do álbum, ano de lançamento, badge de gênero).
+
 ## Projeto Supabase
 
 ### Schema do banco (Postgres)
@@ -129,6 +182,10 @@ create table products (
   title text not null,
   artist text not null,
   cover_url text,
+  lastfm_url text,               -- URL do álbum no Last.fm (validação)
+  release_date text,              -- data de lançamento (ex: "1979-03-01")
+  genre text[] default '{}',       -- tags do álbum no Last.fm
+  lastfm_listeners integer,        -- ouvintes no Last.fm
   created_at timestamptz default now()
 );
 
