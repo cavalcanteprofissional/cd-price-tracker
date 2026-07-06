@@ -164,3 +164,7 @@
 ### Bugs encontrados e corrigidos
 
 - [x] `_search_amazon_with_query()` sem `except` — exceções do Playwright propagavam sem tratamento (corrigido em v0.9.2)
+
+### Bugs encontrados (pendentes)
+
+- [ ] Botão "▶ Rodar" vira ❌ sem feedback — painel não abre no estado `error`; erros do `POST /api/scrape/trigger` não são exibidos ao usuário (v0.9.3)

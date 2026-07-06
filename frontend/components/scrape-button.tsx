@@ -35,6 +35,7 @@ export default function ScrapeButton() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [idleSeconds, setIdleSeconds] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const knownIds = useRef(new Set<string>());
   const lastUpdateAt = useRef<number>(Date.now());
 
@@ -105,6 +106,7 @@ export default function ScrapeButton() {
     if (!token) return;
     setStatus("running");
     setLogs([]);
+    setErrorMessage(null);
     knownIds.current.clear();
     setPanelOpen(true);
 
@@ -114,12 +116,13 @@ export default function ScrapeButton() {
         headers: { "x-admin-token": token },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Erro desconhecido");
       setStartedAt(data.started_at);
       setMode(data.mode);
       lastUpdateAt.current = Date.now();
-    } catch {
+    } catch (e) {
       setStatus("error");
+      setErrorMessage(e instanceof Error ? e.message : "Falha ao conectar com o servidor");
     }
   }
 
@@ -149,11 +152,11 @@ export default function ScrapeButton() {
           : status === "done"
           ? "✅"
           : status === "error"
-          ? "❌"
+          ? "❌ Tentar novamente"
           : "▶ Rodar"}
       </button>
 
-      {panelOpen && (status === "running" || status === "done" || logs.length > 0) && (
+      {panelOpen && (status === "running" || status === "done" || status === "error" || logs.length > 0) && (
         <div
           style={{
             position: "fixed",
@@ -177,7 +180,7 @@ export default function ScrapeButton() {
                 ? `⏳ Coletando logs... (${elapsed}s)`
                 : status === "done"
                 ? "✅ Scraping concluído"
-                : "❌ Falha ao iniciar"}
+                : `❌ ${errorMessage || "Falha ao iniciar"}`}
             </span>
             <a href="/gerenciar/logs" style={{ fontSize: 12, color: "#2563eb", textDecoration: "none" }}>
               Ver todos
