@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0] — 2026-07-05
+
+### Adicionado
+#### New Platforms — Schema + Frontend
+- CHECK constraint expandido: `magalu`, `americanas`, `casas_bahia`, `submarino`, `carrefour`, `extra`
+- PlatformForm: checkboxes para Magalu, Americanas, Casas Bahia
+- PriceCard: labels para todas as novas plataformas
+
+#### Magazine Luiza Scraper
+- `scraper/magalu.py` — Playwright + networkidle + detecção de bloqueio Akamai
+- Registrado em `main.py` via `_process_platform_scrape()`
+
+#### Anti-bot Reality
+- Magalu testado: bloqueado por Akamai 403 (mesma proteção que ML/Shopee)
+- Conclusão: todas as lojas brasileiras grandes usam anti-bot agressivo
+- Plano revisado: Google Shopping API como próxima alternativa
+
 ## [0.7.0] — 2026-07-05
 
 ### Adicionado
