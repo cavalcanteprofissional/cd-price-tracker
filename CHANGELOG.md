@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.3] — 2026-07-06
+
+### Corrigido
+
+#### Botão "▶ Rodar" virava ❌ sem feedback
+- `scrape-button.tsx` — painel não abria no estado `error`; adicionado `"error"` à condição de visibilidade
+- `scrape-button.tsx` — erro do `POST /api/scrape/trigger` agora é capturado e exibido no cabeçalho do painel
+- `scrape-button.tsx` — botão mostra "❌ Tentar novamente" em vez de apenas ❌
+- `trigger/route.ts` — corpo inteiro envolvido em `try/catch` com logging para diagnosticar exceções na rota
+
 ## [0.9.2] — 2026-07-06
 
 ### Corrigido
