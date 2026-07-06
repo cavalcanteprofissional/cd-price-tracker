@@ -99,6 +99,13 @@ def _search_with_query(search_term: str, context, cfg: dict) -> list[dict]:
         if candidates:
             for c in candidates:
                 c["currency"] = cfg["currency"]
+                # _extract_candidates do amazon.py prefixa com .com.br
+                # Corrigir para o domínio do marketplace correto
+                if c.get("listing_url"):
+                    c["listing_url"] = c["listing_url"].replace(
+                        "https://www.amazon.com.br",
+                        f"https://www.{cfg['domain']}",
+                    )
         return candidates or []
     finally:
         if page:

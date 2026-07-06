@@ -64,6 +64,8 @@ def scrape_amazon(amazon_url: str, context) -> dict | None:
             return None
 
         price_text = price_whole.text_content().strip()
+        # Amazon as vezes inclui separador no final: "374." ou "374,"
+        price_text = price_text.rstrip(".,")
         if price_fraction:
             price_text += "," + price_fraction.text_content().strip()
 
