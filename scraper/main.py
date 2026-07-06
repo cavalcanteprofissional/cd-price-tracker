@@ -54,17 +54,95 @@ def choose_lowest_price(items: list[dict]) -> dict | None:
     return min(items, key=lambda x: parse_br_price(x["price_text"]))
 
 
+BASE_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+)
+
+ANTI_DETECT_SCRIPT = """
+Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+window.chrome = { runtime: {} };
+"""
+
+
+def _make_stealth_context(browser):
+    context = browser.new_context(
+        user_agent=BASE_USER_AGENT,
+        viewport={"width": 1366, "height": 768},
+        locale="pt-BR",
+        timezone_id="America/Sao_Paulo",
+        geolocation={"latitude": -23.5505, "longitude": -46.6333},
+        permissions=["geolocation"],
+    )
+    Stealth().apply_stealth_sync(context)
+    context.add_init_script(ANTI_DETECT_SCRIPT)
+    return context
+
+
+def _process_platform_scrape(
+    platform: str,
+    config: dict,
+    scrape_fn,
+    search_query: str | None = None,
+) -> ScrapeResult:
+    if not search_query:
+        title = config["products"]["title"]
+        artist = config["products"]["artist"]
+        search_query = auto_search_query(title, artist)
+        logger.info("%s: search_query auto-gerado: '%s'", platform, search_query)
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled"],
+        )
+        context = _make_stealth_context(browser)
+        try:
+            results = scrape_fn(search_query, context)
+            if not results:
+                return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "sem resultados")
+
+            valid = []
+            for item in results:
+                if is_suspected_fanmade(item["title"]):
+                    supabase.table("scrape_log").insert({
+                        "product_platform_config_id": config["id"],
+                        "status": "skipped_fanmade",
+                        "raw_title": item["title"],
+                        "detail": None,
+                    }).execute()
+                else:
+                    valid.append(item)
+
+            if not valid:
+                return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "tudo filtrado como fanmade")
+
+            best = choose_lowest_price(valid)
+            product = ScrapedProduct(
+                title=best["title"],
+                price=Decimal(str(parse_br_price(best["price_text"]))),
+                currency="BRL",
+                availability="in_stock",
+                seller_name=best.get("seller_name"),
+                listing_url=best["listing_url"],
+                platform=platform,
+            )
+            return ScrapeResult(config["id"], config["product_id"], "success", product, best["title"], None)
+        finally:
+            browser.close()
+
+
 def process_amazon(config: dict) -> ScrapeResult:
     amazon_url = config.get("amazon_url")
     title = config["products"]["title"]
     artist = config["products"]["artist"]
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        browser = pw.chromium.launch(
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled"],
         )
-        Stealth().apply_stealth_sync(context)
+        context = _make_stealth_context(browser)
         try:
             if amazon_url:
                 data = scrape_amazon(amazon_url, context)
@@ -94,98 +172,12 @@ def process_amazon(config: dict) -> ScrapeResult:
 
 def process_mercadolivre(config: dict) -> ScrapeResult:
     search_query = config.get("search_query")
-    if not search_query:
-        title = config["products"]["title"]
-        artist = config["products"]["artist"]
-        search_query = auto_search_query(title, artist)
-        logger.info("ML: search_query vazio, auto-gerado: '%s'", search_query)
-
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-        )
-        try:
-            results = scrape_mercadolivre(search_query, context)
-            if not results:
-                return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "sem resultados")
-
-            valid = []
-            for item in results:
-                if is_suspected_fanmade(item["title"]):
-                    supabase.table("scrape_log").insert({
-                        "product_platform_config_id": config["id"],
-                        "status": "skipped_fanmade",
-                        "raw_title": item["title"],
-                        "detail": None,
-                    }).execute()
-                else:
-                    valid.append(item)
-
-            if not valid:
-                return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "tudo filtrado como fanmade")
-
-            best = choose_lowest_price(valid)
-            product = ScrapedProduct(
-                title=best["title"],
-                price=Decimal(str(parse_br_price(best["price_text"]))),
-                currency="BRL",
-                availability="in_stock",
-                seller_name=best.get("seller_name"),
-                listing_url=best["listing_url"],
-                platform="mercado_livre",
-            )
-            return ScrapeResult(config["id"], config["product_id"], "success", product, best["title"], None)
-        finally:
-            browser.close()
+    return _process_platform_scrape("mercado_livre", config, scrape_mercadolivre, search_query)
 
 
 def process_shopee(config: dict) -> ScrapeResult:
     search_query = config.get("search_query")
-    if not search_query:
-        title = config["products"]["title"]
-        artist = config["products"]["artist"]
-        search_query = auto_search_query(title, artist)
-        logger.info("Shopee: search_query vazio, auto-gerado: '%s'", search_query)
-
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-        )
-        try:
-            results = scrape_shopee(search_query, context)
-            if not results:
-                return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "sem resultados")
-
-            valid = []
-            for item in results:
-                if is_suspected_fanmade(item["title"]):
-                    supabase.table("scrape_log").insert({
-                        "product_platform_config_id": config["id"],
-                        "status": "skipped_fanmade",
-                        "raw_title": item["title"],
-                        "detail": None,
-                    }).execute()
-                else:
-                    valid.append(item)
-
-            if not valid:
-                return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "tudo filtrado como fanmade")
-
-            best = choose_lowest_price(valid)
-            product = ScrapedProduct(
-                title=best["title"],
-                price=Decimal(str(parse_br_price(best["price_text"]))),
-                currency="BRL",
-                availability="in_stock",
-                seller_name=best.get("seller_name"),
-                listing_url=best["listing_url"],
-                platform="shopee",
-            )
-            return ScrapeResult(config["id"], config["product_id"], "success", product, best["title"], None)
-        finally:
-            browser.close()
+    return _process_platform_scrape("shopee", config, scrape_shopee, search_query)
 
 
 def send_digest():

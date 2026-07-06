@@ -57,10 +57,11 @@
 
 ## 3. Scrapers
 
-- [x] Amazon: busca auto-discovery com fallback de seletores + token similarity
-- [x] Mercado Livre: API + Playwright fallback (bloqueado por anti-bot)
-- [x] Shopee: API 403 + Playwright fallback (bloqueado por anti-bot)
+- [x] Amazon: busca auto-discovery com fallback de seletores + token similarity (FUNCIONANDO)
+- [x] Mercado Livre: API + Playwright fallback (BLOQUEADO - anti-bot CAPTCHA)
+- [x] Shopee: API + Playwright networkidle + __INITIAL_STATE__ (BLOQUEADO - verify/traffic)
 - [x] Scrapers rodam em pipeline semanal com persistência em price_history + scrape_log
+- [x] Stealth global: --disable-blink-features, viewport, locale, timezone, geolocation, anti-detect script
 
 ## 4. Logs
 

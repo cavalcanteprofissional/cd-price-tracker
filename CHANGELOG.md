@@ -33,6 +33,12 @@
 #### Pipeline — Scraping diário
 - GitHub Actions alterado de `0 12 * * 1` (semanal) para `0 12 * * *` (diário, 09:00 BRT)
 
+#### Scrapers — Anti-bot mitigations
+- `main.py`: stealth global com `--disable-blink-features=AutomationControlled`, viewport realista, locale pt-BR, timezone SP, geolocation SP, `add_init_script()` anulando `navigator.webdriver`
+- `mercadolivre.py`: tenta API pública primeiro, fallback Playwright com log diagnóstico (CAPTCHA detectado)
+- `shopee.py`: `wait_until='networkidle'` para SPA carregar completamente; extração de `__INITIAL_STATE__` / `__NEXT_DATA__` / JSON-LD em múltiplas profundidades
+- ML e Shopee continuam bloqueados por anti-bot agressivo (CAPTCHA + verificação de tráfego)
+
 #### Produto detalhe — Link "Ver na loja"
 - `produto/[id]/page.tsx` — link direto pro anúncio abaixo de cada gráfico de plataforma
 
