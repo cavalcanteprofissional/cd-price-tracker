@@ -123,8 +123,8 @@ Filtrar por artista: [Michael Jackson] [Pink Floyd] [Radiohead]
 |---|---|---|---|
 | Amazon BR | `amazon.py` | ✅ Sim | Busca automática + fallback de seletores. O mais confiável. |
 | Amazon US | `amazon_global.py` | ✅ Sim | Mesmo código, domínio `.com`, moeda USD |
-| Amazon UK | `amazon_global.py` | ✅ Sim | Domínio `.co.uk`, moeda GBP |
-| Amazon DE | `amazon_global.py` | ✅ Sim | Domínio `.de`, moeda EUR |
+| Amazon UK | `amazon_global.py` | ✅ Sim | Domínio `.co.uk`, moeda GBP. Matching com penalidade de álbum |
+| Amazon DE | `amazon_global.py` | ✅ Sim | Domínio `.de`, moeda EUR. Matching com penalidade de álbum |
 | Mercado Livre | `mercadolivre.py` | ❌ Bloqueado | CAPTCHA anti-bot agressivo (Akamai). API OAuth pendente de aprovação |
 | Shopee | `shopee.py` | ❌ Bloqueado | Redireciona pra verificação de tráfego |
 | Magazine Luiza | `magalu.py` | ❌ Bloqueado | Akamai 403 na primeira requisição |

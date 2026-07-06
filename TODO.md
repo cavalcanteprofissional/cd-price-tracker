@@ -116,7 +116,8 @@
 ## 3. Scrapers
 
 - [x] Amazon: busca auto-discovery com fallback de seletores + token similarity (✅ FUNCIONANDO)
-- [x] Amazon US/UK/DE: marketplace global com `amazon_global.py` (✅ FUNCIONANDO — mesmo código, domínio diferente)
+- [x] Amazon US/UK/DE: marketplace global com `amazon_global.py` (✅ FUNCIONANDO — matching melhorado com penalidade de álbum ausente)
+- [x] Americanas, Casas Bahia, Submarino, Carrefour, Extra: adicionados ao schema + dispatch em `main.py` (sem scraper ainda — log "não implementado")
 - [x] Mercado Livre: API pública + Playwright fallback (❌ BLOQUEADO)
 - [x] Mercado Livre: API oficial com OAuth cliente (🚧 AGUARDANDO APROVACAO ML)
 - [x] Shopee: API + Playwright networkidle + __INITIAL_STATE__ (❌ BLOQUEADO)
@@ -143,6 +144,7 @@
 - [x] Corrigido: polling não depende mais do painel aberto — persiste entre navegações
 - [x] Auto-stop após 5min sem logs (meio-termo entre timeout curto e infinito)
 - [x] Indicador "📡 Xs sem atualização" no painel (fica vermelho após 2min)
+- [x] `main.py` — `load_dotenv()` no topo para carregar `scraper/.env` independente do CWD
 - [ ] Adicionar `GITHUB_PAT` no repositório (GitHub Secret)
 - [ ] Adicionar `GITHUB_PAT` no `.env.local` da Vercel
 

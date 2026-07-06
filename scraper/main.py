@@ -4,6 +4,12 @@ import sys
 import time
 import traceback
 from decimal import Decimal
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Carrega .env da pasta scraper/ antes de qualquer import que leia env vars
+load_dotenv(Path(__file__).parent / ".env")
 
 from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
@@ -300,6 +306,9 @@ def main():
                 result = process_magalu(cfg)
             elif platform == "shopee":
                 result = process_shopee(cfg)
+            elif platform in ("americanas", "casas_bahia", "submarino", "carrefour", "extra"):
+                logger.warning("Scraper nao implementado para: %s", platform)
+                continue
             else:
                 logger.warning("Plataforma desconhecida: %s", platform)
                 continue

@@ -3,7 +3,7 @@ import random
 import time
 from urllib.parse import quote
 
-from scraper.amazon import _extract_candidates, scrape_amazon as _scrape_amazon_product
+from scraper.amazon import _extract_candidates, _normalize, scrape_amazon as _scrape_amazon_product
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,7 @@ def search_amazon_marketplace(title: str, artist: str, context, marketplace: str
     search_terms = [
         f"{title} {artist} cd",
         f"{title} {artist} album",
+        f"{title} {artist}",
     ]
 
     all_candidates = []
@@ -53,9 +54,22 @@ def search_amazon_marketplace(title: str, artist: str, context, marketplace: str
         logger.info("Amazon %s: nenhum resultado para '%s %s'", marketplace, title, artist)
         return None
 
-    expected = f"{title} {artist}"
-    best = max(all_candidates, key=lambda c: _token_similarity(expected, c["title"]))
-    best_score = _token_similarity(expected, best["title"])
+    # Tokens exclusivos do álbum (exclui tokens do artista)
+    expected_tokens = set(_normalize(f"{title} {artist}").split())
+    artist_tokens = set(_normalize(artist).split())
+    album_tokens = expected_tokens - artist_tokens
+
+    def score(candidate: dict) -> float:
+        s = _token_similarity(f"{title} {artist}", candidate["title"])
+        if album_tokens:
+            title_norm = _normalize(candidate["title"])
+            has_album_token = any(t in title_norm for t in album_tokens)
+            if not has_album_token:
+                s *= 0.3
+        return s
+
+    best = max(all_candidates, key=score)
+    best_score = score(best)
 
     logger.info("Amazon %s: melhor match (score=%.2f): '%s'", marketplace, best_score, best["title"])
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.1] — 2026-07-06
+
+### Adicionado
+
+#### Plataformas no dispatch do main.py
+- `main.py` — handlers explícitos para `americanas`, `casas_bahia`, `submarino`, `carrefour`, `extra` com log "Scraper nao implementado" em vez de "Plataforma desconhecida"
+
+### Corrigido
+
+#### Parse de preço internacional (UK/DE)
+- `price_parser.py` — adicionado `£€` à regex de remoção de símbolos monetários
+- `price_parser.py` — adicionado `re.sub(r"[^\d,.\-]", "", text)` para remover lixo não numérico (ex: `BL82.73` → `82.73`)
+
+#### Matching Amazon Global (UK/DE)
+- `amazon_global.py` — novo sistema de score que **penaliza candidatos sem o token do álbum** no título
+  - Extrai tokens exclusivos do álbum (ex: `lungs`) subtraindo tokens do artista (`florence`, `the`, `machine`)
+  - Aplica penalidade 0.3× se o token do álbum estiver ausente
+  - Adicionado terceiro termo de busca `f"{title} {artist}"` (sem sufixo) pra aumentar cobertura
+
 ## [0.9.0] — 2026-07-06
 
 ### Adicionado
