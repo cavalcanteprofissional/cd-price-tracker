@@ -29,6 +29,7 @@
 - [x] Botão "✕" para limpar busca
 - [x] Spinner CSS animado no carregamento
 - [x] Home page com `dynamic = 'force-dynamic'` para evitar cache
+- [x] Supabase client com `cache: 'no-store'` no fetch Server Component
 - [x] Logging nas API routes de DELETE e POST
 
 ### Busca de Álbuns — Filtro por Artista
@@ -50,6 +51,19 @@
 - [x] GitHub Actions workflow configurado
 - [ ] Adicionar secrets no repositório
 - [ ] Testar `workflow_dispatch`
+
+## 3. Scrapers
+
+- [x] Amazon: busca auto-discovery com fallback de seletores + token similarity
+- [x] Mercado Livre: API + Playwright fallback (bloqueado por anti-bot)
+- [x] Shopee: API 403 + Playwright fallback (bloqueado por anti-bot)
+- [x] Scrapers rodam em pipeline semanal com persistência em price_history + scrape_log
+
+## 4. Logs
+
+- [x] API route `GET /api/scrape-logs` (protegida por admin token, service role)
+- [x] Página `/gerenciar/logs` com tabela, filtros por status/plataforma
+- [x] Link para logs no `/gerenciar`
 
 ## 9. Expansão
 

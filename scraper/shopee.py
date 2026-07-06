@@ -73,27 +73,49 @@ def _extract_from_page(search_query: str, context) -> list[dict]:
     page = None
     try:
         page = context.new_page()
-        page.set_default_timeout(30000)
+        page.set_default_timeout(45000)
 
         url = f"https://shopee.com.br/search?keyword={quote(search_query)}"
         logger.info("Shopee fallback: buscando '%s' via Playwright", search_query)
 
         page.goto(url, wait_until="domcontentloaded")
-        time.sleep(random.uniform(3, 6))
+
+        # Aguardar resultados carregarem (SPA pode levar tempo)
+        try:
+            page.wait_for_selector("div.shopee-search-item-result__item", timeout=15000)
+        except Exception:
+            logger.warning("Shopee fallback: seletor demorou, tentando extrair mesmo assim")
+
+        time.sleep(random.uniform(3, 5))
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(2)
 
         items = page.query_selector_all("div.shopee-search-item-result__item")
+
+        # Fallback de seletores
+        if not items:
+            items = page.query_selector_all("[data-sqe='item']")
+        if not items:
+            items = page.query_selector_all("div[class*='search-item']")
+
         results = []
         for item in items[:20]:
             try:
-                title_el = item.query_selector("div[data-sqe='name']")
-                price_el = item.query_selector("span[data-sqe='price']")
-                link_el = item.query_selector("a[data-sqe='link']")
+                selectors = [
+                    ("title", ["div[data-sqe='name']", "div[class*='name']", "div[class*='title']"]),
+                    ("price", ["span[data-sqe='price']", "span[class*='price']", "div[class*='price']"]),
+                    ("link", ["a[data-sqe='link']", "a[class*='item-link']", "a[href*='/product/']"]),
+                ]
 
+                title_el = _first_selector(item, selectors[0][1])
                 if not title_el:
                     continue
-
                 title = title_el.text_content().strip()
+
+                price_el = _first_selector(item, selectors[1][1])
                 price_text = price_el.text_content().strip() if price_el else "0"
+
+                link_el = _first_selector(item, selectors[2][1])
                 href = link_el.get_attribute("href") if link_el else None
                 if href and not href.startswith("http"):
                     href = "https://shopee.com.br" + href
@@ -118,7 +140,17 @@ def _extract_from_page(search_query: str, context) -> list[dict]:
             page.close()
 
 
+def _first_selector(parent, selectors: list[str]):
+    """Tenta multiplos seletores no parent, retorna o primeiro que achar."""
+    for sel in selectors:
+        el = parent.query_selector(sel)
+        if el:
+            return el
+    return None
+
+
 def scrape_shopee(search_query: str, context) -> list[dict]:
+    # Tentar API primeiro (pode falhar com 403)
     results = _extract_from_api(search_query)
     if results is not None:
         logger.info("Shopee: %d resultados via API para '%s'", len(results), search_query)

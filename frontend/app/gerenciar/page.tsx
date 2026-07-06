@@ -65,13 +65,14 @@ export default function AdminPage() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 24, margin: 0 }}>Gerenciar CDs</h1>
-          <p style={{ color: "#6b7280", fontSize: 14, margin: "4px 0 0" }}>
-            {products.length} CD{products.length !== 1 ? "s" : ""} na lista
-          </p>
-        </div>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, margin: 0 }}>Gerenciar CDs</h1>
+        <p style={{ color: "#6b7280", fontSize: 14, margin: "4px 0 0" }}>
+          {products.length} CD{products.length !== 1 ? "s" : ""} na lista
+        </p>
+      </div>
+
+      <div style={{ marginBottom: 20, display: "flex", gap: 12 }}>
         <a
           href="/gerenciar/adicionar"
           style={{
@@ -86,6 +87,21 @@ export default function AdminPage() {
           }}
         >
           + Adicionar CD
+        </a>
+        <a
+          href="/gerenciar/logs"
+          style={{
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#111827",
+            background: "#f3f4f6",
+            border: "1px solid #d1d5db",
+            borderRadius: 6,
+            textDecoration: "none",
+          }}
+        >
+          Logs de Scraping
         </a>
       </div>
 

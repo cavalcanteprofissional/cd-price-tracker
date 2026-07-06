@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.7.0] — 2026-07-05
+
+### Adicionado
+
+#### Log Viewer — `/gerenciar/logs`
+- API route `GET /api/scrape-logs` com service key, filtros por status/platform, paginação
+- Página com tabela de logs, filtros dropdown (status + plataforma), badges coloridos
+- Link "Logs de Scraping" no `/gerenciar` ao lado de "Adicionar CD"
+
+#### Scrapers — Amazon fallback + ML API
+- Amazon: `_extract_candidates()` com fallback `a[href*='/dp/']` para HTML novo da Amazon
+- Amazon: múltiplos search terms (`"cd original"` e `"cd"`)
+- Amazon: similaridade por artista no texto completo do resultado (score mínimo 0.15)
+- Mercado Livre: fallback via API pública `api.mercadolibre.com/sites/MLB/search`
+- Shopee: Playwright fallback com `wait_for_selector`, scroll, múltiplos seletores
+
+### Corrigido
+
+#### Cache da Home Page
+- `supabase.ts` — `cache: 'no-store'` no fetch do supabase client Server Component
+- Dados frescos aparecem imediatamente após adicionar CD via admin
+
+### Alterado
+
+#### Scrapers refatorados
+- `amazon.py`: `_extract_candidates()` + `_search_amazon_with_query()` separados
+- `mercadolivre.py`: API httpx + Playwright fallback em vez de Playwright-only
+- `shopee.py`: `_first_selector()` para tentar múltiplos seletores em cada item
+
 ## [0.6.0] — 2026-07-05
 
 ### Adicionado

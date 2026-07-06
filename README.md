@@ -1,163 +1,133 @@
-# CD Price Tracker
+# 💿 CD Price Tracker
 
-Acompanhe os preços de CDs (Compact Disc) em Amazon, Mercado Livre e Shopee — com scraping automático, histórico de preços, alertas por email e painel web.
-
-## Como funciona
+Acompanhe os preços de CDs em Amazon, Mercado Livre e Shopee sem esforço. Scraping automático, histórico em gráfico, e painel web pra gerenciar tudo.
 
 ```
-┌─────────────┐    ┌──────────────┐    ┌──────────────┐    ┌─────────────┐
-│ Seed de CDs │───→│ Validar no   │───→│ Scrapers     │───→│ Histórico   │
-│ (Last.fm)   │    │ Supabase     │    │ (Playwright) │    │ (Supabase)  │
-└─────────────┘    └──────────────┘    └──────────────┘    └──────┬──────┘
-                                                                  │
-                    ┌──────────────────────────────────────────────┤
-                    │                                              │
-                    ▼                                              ▼
-            ┌──────────────┐                              ┌──────────────┐
-            │ Painel Web   │                              │ Email Digest │
-            │ (Next.js)    │                              │ (Resend)     │
-            └──────────────┘                              └──────────────┘
+     Amazon     Mercado Livre     Shopee
+         \           |           /
+          \          |          /
+       ┌───────────────────────────┐
+       │   Scrapers (Playwright)   │ ← toda segunda 09:00 BRT
+       └───────────┬───────────────┘
+                   │
+          ┌────────▼────────┐
+          │   Supabase DB   │ ← preços + logs
+          └──┬──────────┬───┘
+             │          │
+    ┌────────▼──┐  ┌────▼────────┐
+    │  Next.js  │  │ Email       │
+    │  painel   │  │ digest      │
+    └───────────┘  └─────────────┘
 ```
 
-1. Uma lista curada de CDs fica no Supabase (com capa, artista, ano, gênero do Last.fm)
-2. Sempre que um CD não tem URL ou termo de busca, o scraper descobre automaticamente
-3. Toda segunda-feira às 09:00 BRT, o pipeline roda e coleta os preços
-4. Um filtro inteligente remove anúncios de CDs caseiros, fanmade ou bootleg
-5. Os preços são salvos e você vê o histórico em gráficos no painel
-6. Assinantes recebem um digest semanal por email
+## ✨ O que tem aqui
 
-## Painel Admin
+- **Scrapers automáticos** — o sistema descobre os produtos sozinho. Sem URL manual.
+- **Amazon** ✅ funcionando | **ML/Shopee** ❌ bloqueados por anti-bot (progresso abaixo)
+- **Admin panel** protegido por token — adiciona CDs buscando no Last.fm
+- **Histórico de preços** com gráfico interativo (Recharts)
+- **Logs de scraping** pra saber o que aconteceu em cada execução
+- **Testes**: 99 testes mockados, zero chamadas externas
 
-| Página | Função |
+## 🚀 Rápido
+
+```bash
+# Python
+pip install -r scraper/requirements.txt
+playwright install chromium
+
+# Frontend
+cd frontend && npm install
+
+# .env
+cp scraper/.env.example scraper/.env
+cp frontend/.env.example frontend/.env.local
+# Preencha SUPABASE_URL, keys, etc.
+
+# Rodar
+pytest tests/ -v           # 99 testes
+python scraper/main.py      # scrape manual
+cd frontend && npm run dev  # http://localhost:3000
+```
+
+## 🖥️ Páginas
+
+| Rota | O que faz |
 |---|---|
-| `/gerenciar` | Lista todos os CDs cadastrados com opção de remover |
-| `/gerenciar/adicionar` | Busca álbum no Last.fm, seleciona plataformas, salva |
+| `/` | Home com cards dos CDs e último preço |
+| `/produto/[id]` | Detalhe do CD com gráfico do histórico |
+| `/gerenciar` | Lista CDs, botão pra remover |
+| `/gerenciar/adicionar` | Busca álbum no Last.fm, escolhe lojas, salva |
+| `/gerenciar/logs` | Logs de cada execução do scraper |
 
-### Busca inteligente
+### Busca de álbuns
+
+Digita qualquer coisa — "Thriller", "Michael Jackson", ou os dois. Aparecem capa + artista. Clica nos chips de artista pra filtrar na hora.
 
 ```
 🔍 Buscar álbum ou artista...
 
-Filtrar por artista: [Michael Jackson] [Pink Floyd] [The Beatles]
+Filtrar por artista: [Michael Jackson] [Pink Floyd]
 
-6 resultados:
-┌────────────────────────────────────┐
-│ 💿  Thriller                       │
-│     Michael Jackson                │
-├────────────────────────────────────┤
-│ 💿  The Dark Side of the Moon      │
-│     Pink Floyd                     │
-└────────────────────────────────────┘
+6 resultados encontrados
 ```
 
-Digite qualquer coisa — nome do álbum, artista, ou ambos. Os resultados aparecem com capa e artista. Clicando nos chips de artista, você filtra na hora (sem nova busca).
-
-## Stack
+## 📦 Stack
 
 | Camada | Tecnologia |
 |---|---|
 | Scraper | Python + Playwright + playwright-stealth |
 | Agendamento | GitHub Actions (cron semanal) |
-| Banco | Supabase (Postgres, free tier) |
-| Email | Resend (free tier) |
-| Frontend | Next.js 14 + recharts |
+| Banco | Supabase (free tier) |
+| Frontend | Next.js 14 + Recharts |
 | Testes | Pytest (99 testes) |
 
-## Começar rápido
-
-```bash
-# 1. Clonar
-git clone https://github.com/anomalyco/cd-price-tracker.git
-cd cd-price-tracker
-
-# 2. Python
-pip install -r scraper/requirements.txt
-playwright install chromium
-
-# 3. Frontend
-cd frontend && npm install
-
-# 4. Variáveis de ambiente
-cp scraper/.env.example scraper/.env
-cp frontend/.env.example frontend/.env.local
-# Preencha SUPABASE_URL, SUPABASE_SERVICE_KEY, RESEND_API_KEY, LASTFM_API_KEY...
-```
-
-### Criar as tabelas no Supabase
-
-Execute o schema SQL em `supabase/schema.sql` + `supabase/rls.sql` no SQL Editor do Supabase.
-
-### Rodar os testes
-
-```bash
-pytest tests/ -v    # 99 testes
-```
-
-### Scraping manual
-
-```bash
-python -m scraper.main
-```
-
-### Painel local
-
-```bash
-cd frontend && npm run dev
-# Acesse http://localhost:3000
-```
-
-## Projeto em árvore
+## 📁 Estrutura
 
 ```
 cd-price-tracker/
-├── scraper/               # Python — scrapers e pipeline
-│   ├── main.py            # Orquestrador semanal
-│   ├── amazon.py          # Scraper Amazon (com busca automática)
-│   ├── mercadolivre.py    # Scraper Mercado Livre
-│   ├── shopee.py          # Scraper Shopee (API + fallback)
-│   ├── filter.py          # Filtro anti-fanmade
-│   ├── price_parser.py    # Normalização de preços BRL
-│   ├── models.py          # Dataclasses
-│   ├── supabase_client.py # Cliente Supabase
+├── scraper/               # Python
+│   ├── main.py            # Orquestrador
+│   ├── amazon.py          # Amazon (busca automática)
+│   ├── mercadolivre.py    # ML (API + Playwright)
+│   ├── shopee.py          # Shopee (API + Playwright)
+│   ├── filter.py          # Anti-fanmade
+│   ├── price_parser.py    # R$ 49,90 → 49.90
 │   ├── alert.py           # Alerta de falha
 │   └── email_digest.py    # Digest semanal
-├── frontend/              # Next.js 14 App Router
+├── frontend/              # Next.js 14
 │   ├── app/
-│   │   ├── page.tsx            # Home — lista de CDs
-│   │   ├── produto/[id]        # Detalhe + gráfico
-│   │   ├── cadastro/           # Inscrição email
-│   │   ├── gerenciar/          # Admin (listar, adicionar, remover)
-│   │   └── api/                # API routes
+│   │   ├── page.tsx              # Home
+│   │   ├── produto/[id]          # Detalhe + gráfico
+│   │   ├── gerenciar/            # Admin
+│   │   └── api/                  # API routes
 │   └── components/
-│       ├── price-card.tsx      # Card de preço
-│       ├── price-chart.tsx     # Gráfico recharts
-│       ├── album-search.tsx    # Busca com chips de artista
-│       └── platform-form.tsx   # Seleção de lojas
-├── seed/                  # Dados de exemplo + validação Last.fm
 ├── supabase/              # Schema SQL + RLS + seed
-├── tests/                 # 99 testes unitários (pytest)
-└── .github/workflows/     # GitHub Actions (cron semanal)
+├── tests/                 # 99 testes
+└── .github/workflows/     # Cron semanal
 ```
 
-## Testes
+## 🧪 Testes em destaque
 
-```
-99 passed in 114s
-```
-
-Cada scraper tem testes mockados (Playwright, httpx). Nenhuma chamada externa real nos testes.
-
-| Testes em destaque | O que cobre |
+| Arquivo | Cobre |
 |---|---|
 | `test_amazon.py` | `_normalize`, `_token_similarity`, scrape/search mockados |
 | `test_main.py` | `auto_search_query`, `choose_lowest_price`, `persist_result` |
+| `test_filter.py` | 16 casos de fanmade detection |
 | `test_shopee.py` | API + fallback Playwright |
-| `test_filter.py` | 16 casos de fanmade detection parametrizados |
 
-## Próximos passos
+## 🔧 Status dos scrapers
 
-Veja [TODO.md](TODO.md) para a lista completa de tarefas planejadas.
+| Loja | Status | Motivo |
+|---|---|---|
+| Amazon | ✅ OK | Fallback de seletores se o HTML mudar |
+| Mercado Livre | ❌ Bloqueado | Anti-bot agressivo (CAPTCHA + API 403) |
+| Shopee | ❌ Bloqueado | API 403 + Playwright não extrai itens |
 
-## Licença
+## 📋 Próximos passos
+
+Veja [TODO.md](TODO.md).
+
+## 📄 Licença
 
 MIT
