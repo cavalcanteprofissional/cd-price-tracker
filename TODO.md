@@ -57,17 +57,73 @@
 
 ## 3. Scrapers
 
-- [x] Amazon: busca auto-discovery com fallback de seletores + token similarity (FUNCIONANDO)
-- [x] Mercado Livre: API + Playwright fallback (BLOQUEADO - anti-bot CAPTCHA)
-- [x] Shopee: API + Playwright networkidle + __INITIAL_STATE__ (BLOQUEADO - verify/traffic)
+- [x] Amazon: busca auto-discovery com fallback de seletores + token similarity (✅ FUNCIONANDO)
+- [x] Mercado Livre: API + Playwright fallback (❌ BLOQUEADO - CAPTCHA anti-bot)
+- [x] Shopee: API + Playwright networkidle + __INITIAL_STATE__ (❌ BLOQUEADO - verify/traffic)
+- [x] Magazine Luiza: Playwright networkidle + akamai detection (❌ BLOQUEADO - Akamai 403)
 - [x] Scrapers rodam em pipeline semanal com persistência em price_history + scrape_log
 - [x] Stealth global: --disable-blink-features, viewport, locale, timezone, geolocation, anti-detect script
+
+### 🎯 Plano: Desbloquear ML e Shopee (futuro)
+
+Estratégias a serem testadas quando houver infraestrutura adequada:
+
+| Abordagem | Complexidade | Custo |
+|---|---|---|
+| Headful mode (browser visível) em VPS | Média | R$ 30-50/mês VPS |
+| Pool de proxies residenciais (BrightData, etc.) | Alta | $10-50/mês |
+| API oficial do ML via app registrado (OAuth) | Baixa | Grátis (rate limitado) |
+| API oficial da Shopee via parceria | Alta | Difícil de obter |
+| Google Shopping como fonte agregada | Média | Grátis (rate limitado) |
+| Parse de newsletter/email de ofertas | Baixa | Grátis |
+
+**Prioridade:** tentar API oficial do ML primeiro (só registrar um app), depois Google Shopping como fallback universal.
 
 ## 4. Logs
 
 - [x] API route `GET /api/scrape-logs` (protegida por admin token, service role)
 - [x] Página `/gerenciar/logs` com tabela, filtros por status/plataforma
 - [x] Link para logs no `/gerenciar`
+
+## 5. Expansão para Novas Lojas
+
+### 🏪 Novas plataformas para integrar
+
+| Loja | Vende CDs? | Anti-bot | Status |
+|---|---|---|---|
+| **Magazine Luiza** | ✅ Sim | ❌ Akamai 403 | Bloqueado |
+| **Americanas** | ✅ Sim | ❌ Provável Akamai | Não testado |
+| **Casas Bahia** | ✅ Sim | ❌ Provável Akamai | Não testado |
+| **Submarino** | ✅ Sim | ❌ Provável Akamai | Não testado |
+| **Carrefour** | ✅ Sim | ⚠️ Desconhecido | Não testado |
+| **Extra** | ✅ Sim | ⚠️ Desconhecido | Não testado |
+
+### 🚀 Sugestões adicionais
+
+| Loja / Fonte | Vende CDs? | Motivo |
+|---|---|---|
+| **Google Shopping (API)** | ✅ Agregador | Fonte única para várias lojas; API gratuita 100 consultas/dia |
+| **Google Shopping (scrape)** | ✅ Agregador | Alternativa sem API key, mas Google tem anti-bot |
+| **Buscapé** | ✅ Comparador | Agrega preços de várias lojas |
+| **Zoom** | ✅ Comparador | Similar ao Buscapé |
+| **API oficial Mercado Livre** | ✅ Sim | Precisa de app registrado (OAuth), pode funcionar |
+| **Mercado Livre** | ❌ Bloqueado | Já temos mas CAPTCHA blocking |
+| **Shopee** | ❌ Bloqueado | Já temos mas verify/traffic blocking |
+| **Magazine Luiza** | ❌ Bloqueado | Akamai 403 |
+
+### 🔬 Descobertas
+
+**22:23** — Magalu testado: bloqueado por Akamai anti-bot (403 Forbidden, mesma página que ML). A maioria das lojas brasileiras grandes usa solutions anti-bot (Akamai, DataDome, reCAPTCHA) que bloqueiam Playwright headless mesmo com stealth.
+
+### 📋 Plano de implementação revisado
+
+Dado que todas as lojas brasileiras têm anti-bot agressivo, a abordagem precisa mudar:
+
+1. **Curto prazo — Amazon apenas**: Amazon funciona, focar em melhorar cobertura (mais produtos)
+2. **Médio prazo — Google Shopping (API)**: Configurar Google Cloud Project + Shopping API
+3. **Médio prazo — API oficial ML**: Registrar app no Mercado Livre Developers, usar OAuth
+4. **Longo prazo — VPS com headful**: Rodar scrapers em VPS brasileira com browser visível para lojas com Akamai
+5. **Alternativa — Comparadores**: Integrar Buscapé/Zoom em vez de lojas individuais
 
 ## 9. Expansão
 

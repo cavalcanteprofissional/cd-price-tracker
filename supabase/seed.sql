@@ -63,6 +63,14 @@ select p.id, 'amazon', null, null
 from products p where p.title = 'Thriller' and p.artist = 'Michael Jackson';
 
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
+select p.id, 'magalu', null, null
+from products p where p.title = 'Thriller' and p.artist = 'Michael Jackson';
+
+insert into product_platform_config (product_id, platform, amazon_url, search_query)
+select p.id, 'americanas', null, null
+from products p where p.title = 'Thriller' and p.artist = 'Michael Jackson';
+
+insert into product_platform_config (product_id, platform, amazon_url, search_query)
 select p.id, 'mercado_livre', null, null
 from products p where p.title = 'Thriller' and p.artist = 'Michael Jackson';
 

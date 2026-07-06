@@ -20,6 +20,12 @@ interface PriceCardProps {
 const platformLabels: Record<string, string> = {
   amazon: "Amazon",
   mercado_livre: "Mercado Livre",
+  magalu: "Magazine Luiza",
+  americanas: "Americanas",
+  casas_bahia: "Casas Bahia",
+  submarino: "Submarino",
+  carrefour: "Carrefour",
+  extra: "Extra",
   shopee: "Shopee",
 };
 

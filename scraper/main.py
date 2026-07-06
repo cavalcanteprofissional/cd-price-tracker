@@ -12,6 +12,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from scraper.alert import send_alert
 from scraper.amazon import scrape_amazon, search_amazon
 from scraper.filter import is_suspected_fanmade
+from scraper.magalu import search_magalu
 from scraper.mercadolivre import scrape_mercadolivre
 from scraper.models import ScrapeResult, ScrapedProduct
 from scraper.price_parser import parse_br_price
@@ -175,6 +176,11 @@ def process_mercadolivre(config: dict) -> ScrapeResult:
     return _process_platform_scrape("mercado_livre", config, scrape_mercadolivre, search_query)
 
 
+def process_magalu(config: dict) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("magalu", config, search_magalu, search_query)
+
+
 def process_shopee(config: dict) -> ScrapeResult:
     search_query = config.get("search_query")
     return _process_platform_scrape("shopee", config, scrape_shopee, search_query)
@@ -209,6 +215,8 @@ def main():
                 result = process_amazon(cfg)
             elif platform == "mercado_livre":
                 result = process_mercadolivre(cfg)
+            elif platform == "magalu":
+                result = process_magalu(cfg)
             elif platform == "shopee":
                 result = process_shopee(cfg)
             else:

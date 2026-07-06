@@ -13,6 +13,9 @@ interface PlatformFormProps {
 const platforms = [
   { id: "amazon", label: "Amazon", icon: "🛒" },
   { id: "mercado_livre", label: "Mercado Livre", icon: "🟡" },
+  { id: "magalu", label: "Magazine Luiza", icon: "🟢" },
+  { id: "americanas", label: "Americanas", icon: "🔵" },
+  { id: "casas_bahia", label: "Casas Bahia", icon: "🔴" },
   { id: "shopee", label: "Shopee", icon: "🛍️" },
 ];
 
