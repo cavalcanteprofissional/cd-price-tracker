@@ -3,19 +3,33 @@
 ## [0.8.0] — 2026-07-05
 
 ### Adicionado
-#### New Platforms — Schema + Frontend
-- CHECK constraint expandido: `magalu`, `americanas`, `casas_bahia`, `submarino`, `carrefour`, `extra`
-- PlatformForm: checkboxes para Magalu, Americanas, Casas Bahia
-- PriceCard: labels para todas as novas plataformas
 
-#### Magazine Luiza Scraper
-- `scraper/magalu.py` — Playwright + networkidle + detecção de bloqueio Akamai
-- Registrado em `main.py` via `_process_platform_scrape()`
+#### Expansão de plataformas — Schema + Frontend
+- CHECK constraint do `product_platform_config` expandido com 6 novas plataformas: `magalu`, `americanas`, `casas_bahia`, `submarino`, `carrefour`, `extra`
+- `frontend/components/platform-form.tsx` — checkboxes para Magalu, Americanas, Casas Bahia
+- `frontend/components/price-card.tsx` — labels para todas as novas plataformas
+- `supabase/seed.sql` — configs Magalu + Americanas para o CD Thriller
 
-#### Anti-bot Reality
-- Magalu testado: bloqueado por Akamai 403 (mesma proteção que ML/Shopee)
-- Conclusão: todas as lojas brasileiras grandes usam anti-bot agressivo
-- Plano revisado: Google Shopping API como próxima alternativa
+#### Scraper Magazine Luiza
+- `scraper/magalu.py` — Playwright + `wait_until='networkidle'` + detecção de bloqueio Akamai
+- Registrado em `main.py` via `_process_platform_scrape()`, mesmo padrão de ML/Shopee
+- Funções auxiliares: `_extract_from_page()`, `_best_match()`, `_first_selector()`
+
+### Alterado
+
+#### README refeito
+- Diagrama de arquitetura em Mermaid no topo
+- Tom mais amigável e direto ao ponto
+- Status dos scrapers atualizado com Magalu
+- Stack, estrutura, e próximos passos revisados
+
+#### CHANGELOG reorganizado
+- Seções "Adicionado", "Corrigido", "Alterado" com marcadores descritivos
+- v0.8.0 com detalhes completos da expansão
+
+### Observação
+
+Magalu testado e bloqueado por Akamai 403 — mesma proteção anti-bot de Mercado Livre e Shopee. Todas as lojas brasileiras grandes usam anti-bot agressivo. Plano revisado no TODO.md: Google Shopping API como próxima alternativa.
 
 ## [0.7.0] — 2026-07-05
 
