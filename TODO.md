@@ -85,6 +85,7 @@
 - [x] Hover + highlight no resultado
 - [x] Botão "✕" para limpar busca
 - [x] Spinner CSS animado no carregamento
+- [x] Todas as plataformas marcadas por default ao adicionar CD (não precisa mais selecionar uma a uma)
 - [x] Home page com `dynamic = 'force-dynamic'` para evitar cache
 - [x] Supabase client com `cache: 'no-store'` no fetch Server Component
 - [x] Logging nas API routes de DELETE e POST
@@ -128,6 +129,22 @@
 - [x] API route `GET /api/scrape-logs` (protegida por admin token, service role)
 - [x] Página `/gerenciar/logs` com tabela, filtros por status/plataforma
 - [x] Link para logs no `/gerenciar`
+
+## 5. Run Scraper (Navbar — Live Logs)
+
+- [x] API `POST /api/scrape/trigger` — local exec + Vercel GHA dispatch
+- [x] Filtro `?since=` no `GET /api/scrape-logs` para polling incremental
+- [x] `ScrapeButton` — botão "▶ Rodar" no navbar com painel flutuante
+- [x] Live log feed com polling a cada 3s, icons por status/plataforma, resumo ao final
+- [x] Corrigido: remover auto-timeout de 60s — polling continua até usuário fechar
+- [x] Timer de tempo decorrido no botão (⏳ 45s)
+- [x] Corrigido: `exec` usa `python -m scraper.main` com cwd na raiz (ModuleNotFoundError)
+- [x] Corrigido: mapear `SUPABASE_URL` de `NEXT_PUBLIC_SUPABASE_URL` no exec (KeyError)
+- [x] Corrigido: polling não depende mais do painel aberto — persiste entre navegações
+- [x] Auto-stop após 5min sem logs (meio-termo entre timeout curto e infinito)
+- [x] Indicador "📡 Xs sem atualização" no painel (fica vermelho após 2min)
+- [ ] Adicionar `GITHUB_PAT` no repositório (GitHub Secret)
+- [ ] Adicionar `GITHUB_PAT` no `.env.local` da Vercel
 
 ## 6. Gestão de Plataformas
 

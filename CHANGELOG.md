@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.9.0] — 2026-07-06
+
+### Adicionado
+
+#### Run Scraper — Botão no Navbar com Live Logs
+- `frontend/app/api/scrape/trigger/route.ts` — `POST /api/scrape/trigger` com exec local (`python -m scraper.main`) e dispatch GitHub Actions (Vercel)
+- `frontend/components/scrape-button.tsx` — botão "▶ Rodar" no navbar que abre painel flutuante
+- Live log feed com polling a cada 3s (`GET /api/scrape-logs?since=X`)
+- Auto-stop após 5 minutos sem logs novos; indicador "📡 Xs sem atualização"
+- Polling persiste entre navegações (layout não desmonta)
+- Filtro `?since=` adicionado ao `GET /api/scrape-logs`
+
+#### Platform Manager — Editar lojas no detalhe do CD
+- `frontend/app/api/albums/[id]/platforms/route.ts` — `PATCH` que sincroniza plataformas (deleta removidas, insere novas)
+- `frontend/components/platform-manager.tsx` — checkboxes com admin auth via sessionStorage
+- Integrado em `/produto/[id]` abaixo dos gráficos
+- Labels de plataforma no `/gerenciar` expandidas (BR, US, UK, DE, ML, MGL, AM, CB, SP)
+
+#### Todas as lojas marcadas por default no cadastro
+- `frontend/components/platform-form.tsx` — `useState` inicializado com todas as plataformas
+- Removeu a necessidade de selecionar uma a uma ao adicionar CD
+
+### Corrigido
+
+#### Scraper via botão
+- `trigger/route.ts`: `exec` usa `python -m scraper.main` com `cwd` na raiz (resolve `ModuleNotFoundError`)
+- `exec` mapeia `SUPABASE_URL` de `NEXT_PUBLIC_SUPABASE_URL` (resolve `KeyError`)
+- Live log: removido auto-timeout de 60s que impedia logs de aparecerem
+
+#### Platform Manager — CHECK constraint
+- Identificado que migrações via MCP foram parar em projeto Supabase diferente do real
+- Script de recuperação fornecido para aplicar constraint expandido no projeto correto
+
+### Documentação
+- `CHANGELOG.md` — v0.9.0 completo
+- `TODO.md` — seções Run Scraper + Platform Manager + correções
+- `frontend/.env.example` — adicionado `GITHUB_PAT`, `GITHUB_OWNER`, `GITHUB_REPO`
+
 ## [0.8.0] — 2026-07-05
 
 ### Adicionado

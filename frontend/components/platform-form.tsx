@@ -23,7 +23,7 @@ const platforms = [
 ];
 
 export default function PlatformForm({ album, onSave, onCancel, saving }: PlatformFormProps) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set(platforms.map(p => p.id)));
 
   function toggle(platformId: string) {
     setSelected((prev) => {
@@ -54,7 +54,7 @@ export default function PlatformForm({ album, onSave, onCancel, saving }: Platfo
         Onde você quer monitorar?
       </p>
       <p style={{ margin: "0 0 12px", color: "#6b7280", fontSize: 13 }}>
-        O sistema vai buscar o preço automaticamente em cada loja marcada.
+        O sistema vai buscar o preço automaticamente em cada loja marcada. Todas estão marcadas por padrão.
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

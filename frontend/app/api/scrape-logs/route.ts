@@ -16,6 +16,7 @@ export async function GET(request: Request) {
   const statusFilter = searchParams.get("status");
   const productId = searchParams.get("product_id");
   const platform = searchParams.get("platform");
+  const since = searchParams.get("since");
   const limit = Math.min(Number(searchParams.get("limit")) || 100, 200);
   const offset = Number(searchParams.get("offset")) || 0;
 
@@ -39,6 +40,9 @@ export async function GET(request: Request) {
   }
   if (platform) {
     query = query.eq("product_platform_config.platform", platform);
+  }
+  if (since) {
+    query = query.gte("scraped_at", since);
   }
 
   const { data, error, count } = await query;
