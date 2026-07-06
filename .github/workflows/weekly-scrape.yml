@@ -16,7 +16,7 @@ jobs:
       - run: pip install -r scraper/requirements.txt
       - run: playwright install --with-deps chromium
       - run: python -m pytest tests/ -v
-      - run: python -m scraper.main
+      - run: xvfb-run python -m scraper.main
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

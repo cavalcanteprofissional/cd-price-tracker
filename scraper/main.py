@@ -11,6 +11,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from scraper.alert import send_alert
 from scraper.amazon import scrape_amazon, search_amazon
+from scraper.amazon_global import search_amazon_marketplace, MARKETPLACES
 from scraper.filter import is_suspected_fanmade
 from scraper.magalu import search_magalu
 from scraper.mercadolivre import scrape_mercadolivre, try_mercadolivre_api
@@ -171,6 +172,44 @@ def process_amazon(config: dict) -> ScrapeResult:
             browser.close()
 
 
+def process_amazon_global(platform: str, config: dict) -> ScrapeResult:
+    title = config["products"]["title"]
+    artist = config["products"]["artist"]
+    cfg = MARKETPLACES.get(platform)
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled"],
+        )
+        context = _make_stealth_context(browser)
+        try:
+            logger.info("%s: buscando '%s - %s'", platform, artist, title)
+            data = search_amazon_marketplace(title, artist, context, platform)
+
+            if not data:
+                return ScrapeResult(config["id"], config["product_id"], "error", None, None, "falha ao extrair dados")
+
+            if is_suspected_fanmade(data["title"]):
+                return ScrapeResult(config["id"], config["product_id"], "skipped_fanmade", None, data["title"], None)
+
+            price_text = data["price_text"]
+            currency = data.get("currency", "USD")
+
+            product = ScrapedProduct(
+                title=data["title"],
+                price=Decimal(str(parse_br_price(price_text))),
+                currency=currency,
+                availability=data["availability"],
+                seller_name=data["seller_name"],
+                listing_url=data["listing_url"],
+                platform=platform,
+            )
+            return ScrapeResult(config["id"], config["product_id"], "success", product, data["title"], None)
+        finally:
+            browser.close()
+
+
 def process_mercadolivre(config: dict) -> ScrapeResult:
     search_query = config.get("search_query")
     title = config["products"]["title"]
@@ -253,6 +292,8 @@ def main():
         try:
             if platform == "amazon":
                 result = process_amazon(cfg)
+            elif platform in ("amazon_us", "amazon_uk", "amazon_de"):
+                result = process_amazon_global(platform, cfg)
             elif platform == "mercado_livre":
                 result = process_mercadolivre(cfg)
             elif platform == "magalu":

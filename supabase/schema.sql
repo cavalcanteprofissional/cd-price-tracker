@@ -27,7 +27,7 @@ create table products (
 create table product_platform_config (
   id uuid primary key default gen_random_uuid(),
   product_id uuid references products(id) on delete cascade,
-  platform text not null check (platform in ('amazon', 'mercado_livre', 'shopee', 'magalu', 'americanas', 'casas_bahia', 'submarino', 'carrefour', 'extra')),
+  platform text not null check (platform in ('amazon', 'amazon_us', 'amazon_uk', 'amazon_de', 'mercado_livre', 'shopee', 'magalu', 'americanas', 'casas_bahia', 'submarino', 'carrefour', 'extra')),
   amazon_url text,
   search_query text,
   active boolean default true,

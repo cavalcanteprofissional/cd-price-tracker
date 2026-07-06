@@ -18,7 +18,10 @@ interface PriceCardProps {
 }
 
 const platformLabels: Record<string, string> = {
-  amazon: "Amazon",
+  amazon: "Amazon BR",
+  amazon_us: "Amazon US",
+  amazon_uk: "Amazon UK",
+  amazon_de: "Amazon DE",
   mercado_livre: "Mercado Livre",
   magalu: "Magazine Luiza",
   americanas: "Americanas",

@@ -15,9 +15,17 @@
 ### 🟢 Fase 2 — Amazon Global
 | Tarefa | Status |
 |---|---|
-| Adaptar `amazon.py` para Amazon.com (USD) | ❌ |
-| Adaptar para Amazon UK (GBP) e DE (EUR) | ❌ |
-| Testar pipeline com múltiplas Amazon | ❌ |
+| Criar `scraper/amazon_global.py` com marketplaces US/UK/DE | ✅ Feito |
+| Adicionar `amazon_us`, `amazon_uk`, `amazon_de` ao CHECK constraint | ✅ Feito |
+| Atualizar `main.py` com `process_amazon_global()` | ✅ Feito |
+| Atualizar frontend (PlatformForm + PriceCard) | ✅ Feito |
+| Testar Amazon US com Playwright | ❌ |
+
+### 🟡 Fase 4 — xvfb-run no GitHub Actions
+| Tarefa | Status |
+|---|---|
+| Atualizar workflow para usar `xvfb-run` | ✅ Feito |
+| Testar se Akamai libera com headful virtual no GHA | ❌ |
 
 ### 🟡 Fase 3 — Google Shopping API
 | Tarefa | Status |
@@ -27,17 +35,11 @@
 | Criar `scraper/googleshopping.py` | ❌ |
 | Integrar em `main.py` | ❌ |
 
-### 🟡 Fase 4 — xvfb-run no GitHub Actions
-| Tarefa | Status |
-|---|---|
-| Adicionar `xvfb-run` no workflow GHA | ❌ |
-| Testar se Akamai libera com browser headful virtual | ❌ |
-
 ### 🟠 Fase 5 — Firefox em vez de Chromium
 | Tarefa | Status |
 |---|---|
-| Testar `pw.firefox.launch()` nos scrapers bloqueados | ❌ |
-| Se funcionar, criar fallback automático Chromium→Firefox | ❌ |
+| Testar Firefox nos scrapers bloqueados | ✅ Testado |
+| Resultado: ML passou do CAPTCHA (caiu em verificação de conta), Magalu/Shopee continuam bloqueados | ✅ Documentado |
 
 ### 🟠 Fase 6 — SerpAPI (Google Shopping alternativo)
 | Tarefa | Status |
@@ -113,8 +115,9 @@
 ## 3. Scrapers
 
 - [x] Amazon: busca auto-discovery com fallback de seletores + token similarity (✅ FUNCIONANDO)
+- [x] Amazon US/UK/DE: marketplace global com `amazon_global.py` (✅ FUNCIONANDO — mesmo código, domínio diferente)
 - [x] Mercado Livre: API pública + Playwright fallback (❌ BLOQUEADO)
-- [x] Mercado Livre: API oficial com OAuth cliente (🚧 EM IMPLEMENTAÇÃO)
+- [x] Mercado Livre: API oficial com OAuth cliente (🚧 AGUARDANDO APROVACAO ML)
 - [x] Shopee: API + Playwright networkidle + __INITIAL_STATE__ (❌ BLOQUEADO)
 - [x] Magazine Luiza: Playwright networkidle + akamai detection (❌ BLOQUEADO)
 - [x] Scrapers rodam em pipeline semanal com persistência em price_history + scrape_log
