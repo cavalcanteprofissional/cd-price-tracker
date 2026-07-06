@@ -66,7 +66,7 @@ flowchart TB
 - **Rodar o scraping na hora** com o botão ▶ Rodar no navbar e ver os logs ao vivo
 - **Consultar os logs** de cada execução do scraper — deu certo? falou? por quê?
 
-## � Como começar
+## 🚀 Como começar
 
 ```bash
 # Python
@@ -85,7 +85,10 @@ cp frontend/.env.example frontend/.env.local
 pytest tests/ -v
 
 # Rodar o scraper manualmente
-python scraper/main.py
+python -m scraper.main
+
+# Ou via script direto (mesma coisa)
+cd scraper && python main.py
 
 # Iniciar o painel web
 cd frontend && npm run dev
@@ -95,7 +98,7 @@ cd frontend && npm run dev
 ## 🖥️ Páginas
 
 | Rota | O que faz |
-|---|---|---|
+|---|---|
 | `/` | Home — grid dos CDs com o último preço de cada loja |
 | `/produto/[id]` | Detalhe do CD + gráfico do histórico + gerenciar lojas |
 | `/gerenciar` | Lista os CDs cadastrados, com botão pra remover |
@@ -117,7 +120,7 @@ Filtrar por artista: [Michael Jackson] [Pink Floyd] [Radiohead]
 ## 🔧 Status dos scrapers
 
 | Loja | Scraper | Funcionando? | Observação |
-|---|---|---|---|---|
+|---|---|---|---|
 | Amazon BR | `amazon.py` | ✅ Sim | Busca automática + fallback de seletores. O mais confiável. |
 | Amazon US | `amazon_global.py` | ✅ Sim | Mesmo código, domínio `.com`, moeda USD |
 | Amazon UK | `amazon_global.py` | ✅ Sim | Domínio `.co.uk`, moeda GBP |
@@ -183,14 +186,18 @@ cd-price-tracker/
 Quando você abre a home, vê os CDs assim:
 
 ```
-┌──────────────────────────────────┐
-│  💿  Thriller                    │
-│      Michael Jackson             │
-│                                 │
-│  Amazon: R$ 44,90     🛒        │
-│  Mercado Livre: R$ 59,90  🟡    │
-│  Shopee: R$ 39,90       🛍️      │
-└──────────────────────────────────┘
+┌──────────────────────────────────────┐
+│  💿  Thriller                        │
+│      Michael Jackson                 │
+│                                      │
+│  🇧🇷 Amazon: R$ 44,90       🛒       │
+│  🇺🇸 Amazon US: $38,95      🛒       │
+│  🇬🇧 Amazon UK: £32,50      🛒       │
+│  🇩🇪 Amazon DE: €36,20      🛒       │
+│  🟡 Mercado Livre: indisponível      │
+│  🟢 Magazine Luiza: indisponível     │
+│  🛍️ Shopee: R$ 39,90                │
+└──────────────────────────────────────┘
 ```
 
 Clica no preço → abre o anúncio. Clica no card → abre o gráfico do histórico.
