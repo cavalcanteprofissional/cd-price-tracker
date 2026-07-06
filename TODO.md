@@ -158,3 +158,9 @@
 
 - [ ] Popular CDs via admin panel
 - [ ] Monitorar scrape_log para ajustar filtro
+
+---
+
+### Bugs encontrados e corrigidos
+
+- [x] `_search_amazon_with_query()` sem `except` — exceções do Playwright propagavam sem tratamento (corrigido em v0.9.2)

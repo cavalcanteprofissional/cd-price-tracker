@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.2] — 2026-07-06
+
+### Corrigido
+
+#### Exception não tratada no search_amazon (Playwright timeout)
+- `scraper/amazon.py` — `_search_amazon_with_query()` tinha `try/finally` sem `except`; exceções como timeout do Playwright propagavam sem tratamento
+- Adicionado `except Exception` que loga o erro e retorna `None`, consistente com o padrão de `scrape_amazon()`
+- Teste `test_exception_handled` passou a falhar; corrigido com o bloco except
+
 ## [0.9.1] — 2026-07-06
 
 ### Adicionado

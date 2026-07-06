@@ -165,7 +165,7 @@ def _extract_candidates(page) -> list[dict]:
     return candidates
 
 
-def _search_amazon_with_query(search_term: str, context) -> dict | None:
+def _search_amazon_with_query(search_term: str, context) -> list | None:
     page = None
     try:
         logger.info("Amazon search: buscando '%s'", search_term)
@@ -189,6 +189,9 @@ def _search_amazon_with_query(search_term: str, context) -> dict | None:
             return None
 
         return candidates
+    except Exception as e:
+        logger.error("Amazon search: erro ao buscar '%s': %s", search_term, e)
+        return None
     finally:
         if page:
             page.close()
