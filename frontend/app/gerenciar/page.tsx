@@ -145,20 +145,20 @@ export default function AdminPage() {
                 <div style={{ color: "#6b7280", fontSize: 13 }}>{product.artist}</div>
               </div>
               <div style={{ display: "flex", gap: 4 }}>
-                {(product.platforms ?? []).map((p) => (
-                  <span
-                    key={p.platform}
-                    style={{
-                      fontSize: 11,
-                      background: "#f3f4f6",
-                      padding: "2px 6px",
-                      borderRadius: 4,
-                      color: "#6b7280",
-                    }}
-                  >
-                    {p.platform === "amazon" ? "AMZ" : p.platform === "mercado_livre" ? "ML" : "SP"}
-                  </span>
-                ))}
+                  {(product.platforms ?? []).map((p) => (
+                    <span
+                      key={p.platform}
+                      style={{
+                        fontSize: 11,
+                        background: "#f3f4f6",
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                        color: "#6b7280",
+                      }}
+                    >
+                      {p.platform === "amazon" ? "BR" : p.platform === "amazon_us" ? "US" : p.platform === "amazon_uk" ? "UK" : p.platform === "amazon_de" ? "DE" : p.platform === "mercado_livre" ? "ML" : p.platform === "magalu" ? "MGL" : p.platform === "americanas" ? "AM" : p.platform === "casas_bahia" ? "CB" : p.platform === "shopee" ? "SP" : p.platform.toUpperCase().slice(0, 3)}
+                    </span>
+                  ))}
               </div>
               <button
                 type="button"

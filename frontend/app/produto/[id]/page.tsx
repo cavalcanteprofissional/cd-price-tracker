@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import PriceChart from "@/components/price-chart";
+import PlatformManager from "@/components/platform-manager";
 
 interface Props {
   params: { id: string };
@@ -93,12 +94,17 @@ export default async function ProductPage({ params }: Props) {
                   textDecoration: "none",
                 }}
               >
-                Ver na {cfg.platform === "amazon" ? "Amazon" : cfg.platform === "mercado_livre" ? "Mercado Livre" : "Shopee"} ↗
+                Ver na loja ↗
               </a>
             )}
           </div>
         );
       })}
+
+      <PlatformManager
+        productId={params.id}
+        initialPlatforms={configs.map((c: any) => c.platform)}
+      />
     </div>
   );
 }

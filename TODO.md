@@ -129,6 +129,12 @@
 - [x] Página `/gerenciar/logs` com tabela, filtros por status/plataforma
 - [x] Link para logs no `/gerenciar`
 
+## 6. Gestão de Plataformas
+
+- [x] API `PATCH /api/albums/[id]/platforms` — sincroniza plataformas (deleta removidas, insere novas)
+- [x] Componente `PlatformManager` — checkboxes com admin auth, integrado no `/produto/[id]`
+- [x] `/gerenciar`: labels de plataforma expandidos (BR, US, UK, DE, ML, MGL, AM, CB, SP)
+
 ## 9. Expansão
 
 - [ ] Popular CDs via admin panel
