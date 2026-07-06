@@ -66,14 +66,39 @@ export default async function ProductPage({ params }: Props) {
         <p style={{ color: "#9ca3af" }}>Nenhuma plataforma configurada para este CD.</p>
       )}
 
-      {configs.map((cfg: any) => (
-        <div key={cfg.id} style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 12, textTransform: "capitalize" }}>
-            {cfg.platform.replace("_", " ")}
-          </h2>
-          <PriceChart prices={cfg.price_history ?? []} />
-        </div>
-      ))}
+      {configs.map((cfg: any) => {
+        const prices = cfg.price_history ?? [];
+        const latest = prices.length > 0
+          ? prices.reduce((a: any, b: any) =>
+              new Date(a.scraped_at) > new Date(b.scraped_at) ? a : b
+            )
+          : null;
+
+        return (
+          <div key={cfg.id} style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 18, marginBottom: 12, textTransform: "capitalize" }}>
+              {cfg.platform.replace("_", " ")}
+            </h2>
+            <PriceChart prices={prices} />
+            {latest?.listing_url && (
+              <a
+                href={latest.listing_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-block",
+                  marginTop: 8,
+                  fontSize: 13,
+                  color: "#2563eb",
+                  textDecoration: "none",
+                }}
+              >
+                Ver na {cfg.platform === "amazon" ? "Amazon" : cfg.platform === "mercado_livre" ? "Mercado Livre" : "Shopee"} ↗
+              </a>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -7,7 +7,7 @@ Acompanhe os preços de CDs em Amazon, Mercado Livre e Shopee sem esforço. Scra
          \           |           /
           \          |          /
        ┌───────────────────────────┐
-       │   Scrapers (Playwright)   │ ← toda segunda 09:00 BRT
+       │   Scrapers (Playwright)   │ ← todo dia 09:00 BRT
        └───────────┬───────────────┘
                    │
           ┌────────▼────────┐

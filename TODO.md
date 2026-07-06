@@ -31,6 +31,9 @@
 - [x] Home page com `dynamic = 'force-dynamic'` para evitar cache
 - [x] Supabase client com `cache: 'no-store'` no fetch Server Component
 - [x] Logging nas API routes de DELETE e POST
+- [x] PriceCard: preço vira link clicável para listing_url
+- [x] Produto detalhe: link "Ver na loja ↗" abaixo do gráfico
+- [x] PriceCard: corrigido hydration error (div + router, stopPropagation no badge)
 
 ### Busca de Álbuns — Filtro por Artista
 

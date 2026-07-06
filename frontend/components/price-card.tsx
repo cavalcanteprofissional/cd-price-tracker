@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 interface PriceItem {
   platform: string;
   price: number;
@@ -22,17 +24,17 @@ const platformLabels: Record<string, string> = {
 };
 
 export default function PriceCard({ id, title, artist, coverUrl, prices }: PriceCardProps) {
+  const router = useRouter();
+
   return (
-    <a
-      href={`/produto/${id}`}
+    <div
+      onClick={() => router.push(`/produto/${id}`)}
       style={{
-        display: "block",
         background: "#fff",
         borderRadius: 8,
         padding: 16,
         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        textDecoration: "none",
-        color: "inherit",
+        cursor: "pointer",
         border: "1px solid #e5e7eb",
         transition: "box-shadow 0.2s",
       }}
@@ -70,8 +72,12 @@ export default function PriceCard({ id, title, artist, coverUrl, prices }: Price
       {prices.length > 0 && (
         <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
           {prices.map((p, i) => (
-            <span
+            <a
               key={i}
+              href={p.listing_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               style={{
                 fontSize: 13,
                 background: "#f3f4f6",
@@ -80,13 +86,15 @@ export default function PriceCard({ id, title, artist, coverUrl, prices }: Price
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
+                textDecoration: "none",
+                color: "inherit",
               }}
             >
               {platformLabels[p.platform] ?? p.platform}: <strong>R$ {Number(p.price).toFixed(2)}</strong>
-            </span>
+            </a>
           ))}
         </div>
       )}
-    </a>
+    </div>
   );
 }

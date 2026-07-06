@@ -1,7 +1,7 @@
-name: Weekly CD Price Scrape
+name: Daily CD Price Scrape
 on:
   schedule:
-    - cron: '0 12 * * 1'
+    - cron: '0 12 * * *'
   workflow_dispatch: {}
 
 jobs:

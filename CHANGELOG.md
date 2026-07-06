@@ -22,6 +22,20 @@
 - `supabase.ts` — `cache: 'no-store'` no fetch do supabase client Server Component
 - Dados frescos aparecem imediatamente após adicionar CD via admin
 
+#### Home — Preço agora é link clicável
+- `price-card.tsx` — `<span>` do preço substituído por `<a href={listing_url} target="_blank">`
+- Abre o anúncio real em nova aba
+
+#### Corrigido hydration error (âncora dentro de âncora)
+- `price-card.tsx` — wrapper `<a>` → `<div>` + `useRouter().push()`
+- `e.stopPropagation()` no badge de preço para não disparar redirect do card
+
+#### Pipeline — Scraping diário
+- GitHub Actions alterado de `0 12 * * 1` (semanal) para `0 12 * * *` (diário, 09:00 BRT)
+
+#### Produto detalhe — Link "Ver na loja"
+- `produto/[id]/page.tsx` — link direto pro anúncio abaixo de cada gráfico de plataforma
+
 ### Alterado
 
 #### Scrapers refatorados
