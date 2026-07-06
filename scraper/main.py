@@ -13,7 +13,7 @@ from scraper.alert import send_alert
 from scraper.amazon import scrape_amazon, search_amazon
 from scraper.filter import is_suspected_fanmade
 from scraper.magalu import search_magalu
-from scraper.mercadolivre import scrape_mercadolivre
+from scraper.mercadolivre import scrape_mercadolivre, try_mercadolivre_api
 from scraper.models import ScrapeResult, ScrapedProduct
 from scraper.price_parser import parse_br_price
 from scraper.shopee import scrape_shopee
@@ -173,6 +173,46 @@ def process_amazon(config: dict) -> ScrapeResult:
 
 def process_mercadolivre(config: dict) -> ScrapeResult:
     search_query = config.get("search_query")
+    title = config["products"]["title"]
+    artist = config["products"]["artist"]
+    if not search_query:
+        search_query = auto_search_query(title, artist)
+
+    # 1. Tentar API oficial (httpx, sem browser)
+    api_results = try_mercadolivre_api(search_query)
+    if api_results is not None:
+        config_id = config["id"]
+        product_id = config["product_id"]
+
+        valid = []
+        for item in api_results:
+            if is_suspected_fanmade(item["title"]):
+                supabase.table("scrape_log").insert({
+                    "product_platform_config_id": config_id,
+                    "status": "skipped_fanmade",
+                    "raw_title": item["title"],
+                    "detail": None,
+                }).execute()
+            else:
+                valid.append(item)
+
+        if valid:
+            best = choose_lowest_price(valid)
+            product = ScrapedProduct(
+                title=best["title"],
+                price=Decimal(str(parse_br_price(best["price_text"]))),
+                currency="BRL",
+                availability="in_stock",
+                seller_name=best.get("seller_name"),
+                listing_url=best["listing_url"],
+                platform="mercado_livre",
+            )
+            logger.info("ML: sucesso via API oficial — %s R$ %s", best["title"], best["price_text"])
+            return ScrapeResult(config_id, product_id, "success", product, best["title"], None)
+        else:
+            return ScrapeResult(config_id, product_id, "not_found", None, None, "tudo filtrado como fanmade")
+
+    # 2. Fallback: Playwright (com browser)
     return _process_platform_scrape("mercado_livre", config, scrape_mercadolivre, search_query)
 
 

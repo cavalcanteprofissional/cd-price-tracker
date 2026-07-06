@@ -6,7 +6,15 @@ from urllib.parse import quote
 
 import httpx
 
+from scraper.mercadolivre_api import MercadoLivreAPIClient
+
 logger = logging.getLogger(__name__)
+
+
+def try_mercadolivre_api(search_query: str) -> list[dict] | None:
+    """Tenta API oficial com OAuth. Se nao configurada ou falhar, retorna None."""
+    client = MercadoLivreAPIClient()
+    return client.search_with_fallback(search_query)
 
 
 ML_DESKTOP_URL = "https://lista.mercadolivre.com.br/{}"
@@ -27,7 +35,8 @@ ML_SELECTORS = {
 }
 
 
-def _extract_from_api(search_query: str) -> list[dict] | None:
+def _extract_from_api_public(search_query: str) -> list[dict] | None:
+    """Tenta a API publica sem autenticacao (quase sempre 403)."""
     try:
         params = {"q": search_query, "limit": 20}
         resp = httpx.get(ML_API_URL, params=params, headers=ML_HEADERS, timeout=15)
@@ -52,7 +61,7 @@ def _extract_from_api(search_query: str) -> list[dict] | None:
             })
         return items
     except Exception as e:
-        logger.warning("ML API: erro na busca '%s': %s", search_query, e)
+        logger.debug("ML API publica: erro na busca '%s': %s", search_query, e)
         return None
 
 
@@ -91,13 +100,20 @@ def _extract_from_page(page) -> list[dict]:
 
 
 def scrape_mercadolivre(search_query: str, context) -> list[dict]:
-    # 1. Tentar API (mais rapido, sem browser)
-    api_results = _extract_from_api(search_query)
+    # 1. Tentar API oficial com OAuth (se configurada)
+    api_client = MercadoLivreAPIClient()
+    oauth_results = api_client.search_with_fallback(search_query)
+    if oauth_results is not None:
+        logger.info("ML: %d resultados via API oficial", len(oauth_results))
+        return oauth_results
+
+    # 2. Tentar API publica (geralmente 403, mas tentar nao custa)
+    api_results = _extract_from_api_public(search_query)
     if api_results:
-        logger.info("ML: %d resultados via API", len(api_results))
+        logger.info("ML: %d resultados via API publica", len(api_results))
         return api_results
 
-    # 2. Via Playwright (geralmente bloqueado por CAPTCHA)
+    # 3. Via Playwright (geralmente bloqueado por CAPTCHA)
     logger.info("ML: tentando via Playwright")
     queries = [search_query]
     if " original" in search_query:
@@ -123,7 +139,6 @@ def scrape_mercadolivre(search_query: str, context) -> list[dict]:
                 logger.info("ML desktop: %d resultados", len(items))
                 return items
 
-            # Diagnostico
             title = page.title()
             content_preview = page.content()[:500].lower()
             if "captcha" in content_preview:
