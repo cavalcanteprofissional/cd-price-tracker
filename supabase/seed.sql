@@ -1,13 +1,10 @@
 -- ============================================================
 -- Seed data — CD Price Tracker
--- Executar APÓS schema.sql + rls.sql no SQL Editor do Supabase
+-- amazon_url e search_query como null = scraper descobre automaticamente
 -- ============================================================
 
 begin;
 
--- ----------------------------------------
--- Products (5 CDs enriquecidos via Last.fm)
--- ----------------------------------------
 insert into products (id, title, artist, cover_url, lastfm_url, release_date, genre, lastfm_listeners) values
   (
     gen_random_uuid(),
@@ -60,52 +57,45 @@ insert into products (id, title, artist, cover_url, lastfm_url, release_date, ge
     null
   );
 
--- ----------------------------------------
--- Product Platform Config (URLs e queries de busca)
--- ----------------------------------------
--- Thriller: Amazon + Mercado Livre + Shopee
+-- Configs com amazon_url/search_query = null (auto-descoberta)
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'amazon', 'https://www.amazon.com.br/dp/B001234567', null
+select p.id, 'amazon', null, null
 from products p where p.title = 'Thriller' and p.artist = 'Michael Jackson';
 
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'mercado_livre', null, 'thriller michael jackson cd original'
+select p.id, 'mercado_livre', null, null
 from products p where p.title = 'Thriller' and p.artist = 'Michael Jackson';
 
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'shopee', null, 'thriller michael jackson cd'
+select p.id, 'shopee', null, null
 from products p where p.title = 'Thriller' and p.artist = 'Michael Jackson';
 
--- Abbey Road: Amazon + Mercado Livre
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'amazon', 'https://www.amazon.com.br/dp/B000123456', null
+select p.id, 'amazon', null, null
 from products p where p.title = 'Abbey Road' and p.artist = 'The Beatles';
 
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'mercado_livre', null, 'abbey road beatles cd original'
+select p.id, 'mercado_livre', null, null
 from products p where p.title = 'Abbey Road' and p.artist = 'The Beatles';
 
--- The Dark Side of the Moon: Mercado Livre + Shopee
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'mercado_livre', null, 'dark side of the moon pink floyd cd'
+select p.id, 'mercado_livre', null, null
 from products p where p.title = 'The Dark Side of the Moon' and p.artist = 'Pink Floyd';
 
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'shopee', null, 'dark side of the moon pink floyd cd'
+select p.id, 'shopee', null, null
 from products p where p.title = 'The Dark Side of the Moon' and p.artist = 'Pink Floyd';
 
--- Nevermind: Amazon + Mercado Livre
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'amazon', 'https://www.amazon.com.br/dp/B000987654', null
+select p.id, 'amazon', null, null
 from products p where p.title = 'Nevermind' and p.artist = 'Nirvana';
 
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'mercado_livre', null, 'nevermind nirvana cd original'
+select p.id, 'mercado_livre', null, null
 from products p where p.title = 'Nevermind' and p.artist = 'Nirvana';
 
--- OK Computer: Shopee
 insert into product_platform_config (product_id, platform, amazon_url, search_query)
-select p.id, 'shopee', null, 'ok computer radiohead cd'
+select p.id, 'shopee', null, null
 from products p where p.title = 'OK Computer' and p.artist = 'Radiohead';
 
 commit;

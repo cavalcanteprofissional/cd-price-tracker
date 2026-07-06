@@ -2,45 +2,23 @@ import pytest
 from scraper.filter import is_suspected_fanmade
 
 
-def test_original_cd():
-    assert is_suspected_fanmade("Thriller - Michael Jackson (CD Original)") is False
-
-
-def test_fanmade_detected():
-    assert is_suspected_fanmade("CD Fan Made - Artista Desconhecido") is True
-
-
-def test_caseiro_detected():
-    assert is_suspected_fanmade("CD caseiro de música brasileira") is True
-
-
-def test_kit_personalizado():
-    assert is_suspected_fanmade("Kit personalizado de CD") is True
-
-
-def test_cd_virgem():
-    assert is_suspected_fanmade("CD virgem para gravação") is True
-
-
-def test_pirata():
-    assert is_suspected_fanmade("CD pirata do Rock in Rio") is True
-
-
-def test_bootleg():
-    assert is_suspected_fanmade("Bootleg show 1994") is True
-
-
-def test_reproducao():
-    assert is_suspected_fanmade("Reprodução de CD raro") is True
-
-
-def test_nao_original():
-    assert is_suspected_fanmade("CD não original - cópia simples") is True
-
-
-def test_descricao_ajuda():
-    assert is_suspected_fanmade("CD Legítimo", description="produto artesanal") is True
-
-
-def test_cd_original_loja():
-    assert is_suspected_fanmade("CD Legítimo - Loja Oficial", description="produto lacrado original") is False
+@pytest.mark.parametrize("title,description,expected", [
+    ("Thriller - Michael Jackson (CD Original)", None, False),
+    ("CD Legítimo - Loja Oficial", "produto lacrado original", False),
+    ("Nevermind", None, False),
+    ("", None, False),
+    ("CD Fan Made - Artista Desconhecido", None, True),
+    ("CD caseiro de música brasileira", None, True),
+    ("Kit personalizado de CD", None, True),
+    ("CD virgem para gravação", None, True),
+    ("CD pirata do Rock in Rio", None, True),
+    ("Bootleg show 1994", None, True),
+    ("Reprodução de CD raro", None, True),
+    ("CD não original - cópia simples", None, True),
+    ("CD Legítimo", "produto artesanal", True),
+    ("CD Original", "réplica artesanal", True),
+    ("IMPRESSAO DOMESTICA", None, True),
+    ("Cd Personalizado", None, True),
+])
+def test_is_suspected_fanmade(title, description, expected):
+    assert is_suspected_fanmade(title, description) is expected

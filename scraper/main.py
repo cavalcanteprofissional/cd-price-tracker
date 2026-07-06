@@ -6,11 +6,11 @@ import traceback
 from decimal import Decimal
 
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
+from playwright_stealth import Stealth
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from scraper.alert import send_alert
-from scraper.amazon import scrape_amazon
+from scraper.amazon import scrape_amazon, search_amazon
 from scraper.filter import is_suspected_fanmade
 from scraper.mercadolivre import scrape_mercadolivre
 from scraper.models import ScrapeResult, ScrapedProduct
@@ -23,6 +23,10 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+def auto_search_query(title: str, artist: str) -> str:
+    return f"{title} {artist} cd original"
 
 
 def persist_result(result: ScrapeResult):
@@ -51,18 +55,23 @@ def choose_lowest_price(items: list[dict]) -> dict | None:
 
 
 def process_amazon(config: dict) -> ScrapeResult:
-    amazon_url = config["amazon_url"]
-    if not amazon_url:
-        return ScrapeResult(config["id"], config["product_id"], "error", None, None, "amazon_url vazio")
+    amazon_url = config.get("amazon_url")
+    title = config["products"]["title"]
+    artist = config["products"]["artist"]
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
         )
-        stealth_sync(context)
+        Stealth().apply_stealth_sync(context)
         try:
-            data = scrape_amazon(amazon_url, context)
+            if amazon_url:
+                data = scrape_amazon(amazon_url, context)
+            else:
+                logger.info("Amazon: amazon_url vazio, buscando '%s - %s'", artist, title)
+                data = search_amazon(title, artist, context)
+
             if not data:
                 return ScrapeResult(config["id"], config["product_id"], "error", None, None, "falha ao extrair dados")
 
@@ -84,9 +93,12 @@ def process_amazon(config: dict) -> ScrapeResult:
 
 
 def process_mercadolivre(config: dict) -> ScrapeResult:
-    search_query = config["search_query"]
+    search_query = config.get("search_query")
     if not search_query:
-        return ScrapeResult(config["id"], config["product_id"], "error", None, None, "search_query vazio")
+        title = config["products"]["title"]
+        artist = config["products"]["artist"]
+        search_query = auto_search_query(title, artist)
+        logger.info("ML: search_query vazio, auto-gerado: '%s'", search_query)
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
@@ -129,9 +141,12 @@ def process_mercadolivre(config: dict) -> ScrapeResult:
 
 
 def process_shopee(config: dict) -> ScrapeResult:
-    search_query = config["search_query"]
+    search_query = config.get("search_query")
     if not search_query:
-        return ScrapeResult(config["id"], config["product_id"], "error", None, None, "search_query vazio")
+        title = config["products"]["title"]
+        artist = config["products"]["artist"]
+        search_query = auto_search_query(title, artist)
+        logger.info("Shopee: search_query vazio, auto-gerado: '%s'", search_query)
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)

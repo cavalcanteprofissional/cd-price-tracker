@@ -1,5 +1,96 @@
 # Changelog
 
+## [0.6.0] — 2026-07-05
+
+### Adicionado
+
+#### Busca de Álbuns — Filtro por Artista (chips)
+- Input único com ícone 🔍 e placeholder "Buscar álbum ou artista..."
+- Chips de artista extraídos dos resultados — clique para filtrar, clique de novo para remover
+- Filtro client-side instantâneo (sem nova requisição)
+- Contador "X resultados encontrados"
+- Chips ocultos quando há somente 1 artista
+
+#### Testes — Bateria completa (16 → 99 testes)
+- `test_amazon.py` — `_normalize`, `_token_similarity`, `scrape_amazon` (5 cenários mockados), `search_amazon` (5 cenários mockados)
+- `test_mercadolivre.py` — scrape_mercadolivre mockado (5 cenários)
+- `test_shopee.py` — `_extract_from_api`, `_extract_from_page`, fallback API→Playwright (10 cenários)
+- `test_main.py` — `auto_search_query`, `choose_lowest_price`, `persist_result`
+- `test_models.py` — `ScrapedProduct`, `ScrapeResult`
+- `test_validate_albums.py` — `_normalize`, `token_similarity`, `_pick_best_image`, `LastFMClient`
+- `test_email_digest.py` — renderização HTML do digest
+- `test_alert.py` — envio de alerta
+- `test_filter.py` — refatorado para `@pytest.mark.parametrize` (16 casos)
+- `test_price_parser.py` — refatorado para `@pytest.mark.parametrize` (10 casos)
+
+#### Dependência
+- `pytest-mock` — fixture `mocker` para mocks limpos nos testes
+
+### Corrigido
+
+#### Frontend — Cache da Home Page
+- `app/page.tsx` adicionado `export const dynamic = "force-dynamic"` — impede Next.js de servir HTML estático em cache
+- Logging adicionado nas API routes DELETE e POST para depuração
+
+#### Scrapers — playwright-stealth v2
+- `main.py` atualizado de `stealth_sync()` para `Stealth().apply_stealth_sync()` (compatibilidade v2.0.3)
+
+#### Email Digest — Template bug
+- `email_digest.py` — `R$` em `Template()` causava `ValueError` (`$` seguido de espaço é inválido). Corrigido com `R$$` (escape)
+
+### Alterado
+
+#### Frontend — Busca de Álbuns
+- Removido sistema de dois inputs (álbum + artista separados)
+- Substituído por input único + chips de artista pós-busca
+- `adicionar/page.tsx` — fix de tipo TypeScript (`token!` no header fetch)
+
+#### API Route
+- `/api/albums/search` — removido suporte a `?artist=` (volta ao original, `?q=` apenas)
+
+## [0.5.0] — 2026-07-05
+
+### Alterado
+
+#### Frontend — Formulário de Adicionar simplificado
+- `platform-form.tsx` — removidos campos de URL Amazon e search_query ML/Shopee
+- Agora só checkboxes: marcar plataforma = sistema descobre automaticamente
+- API `/api/albums/add` — aceita array de strings `["amazon", "mercado_livre"]`
+
+#### Scrapers — Busca automática
+- `amazon.py` — nova função `search_amazon(title, artist, context)` que:
+  - Busca na Amazon por título + artista via Playwright
+  - Encontra o melhor resultado por similaridade de texto
+  - Extrai preço da página de busca (ou navega ao produto se necessário)
+- `main.py` — quando `amazon_url` ou `search_query` são NULL:
+  - Amazon: chama `search_amazon` com nome do CD
+  - ML/Shopee: auto-gera `{title} {artist} cd original`
+
+#### Seed
+- `supabase/seed.sql` — `amazon_url` e `search_query` agora como NULL (auto-descoberta)
+- `seed/products.json` e `products_enriched.json` — estrutura simplificada
+
+#### Schema do banco
+- Nenhuma tabela removida (schema permanece inalterado)
+- `amazon_url` e `search_query` mantidos como nullable
+- Dados existentes no Supabase atualizados para NULL
+
+## [0.4.0] — 2026-07-05
+
+### Adicionado
+
+#### Gestão de CDs (Admin Panel)
+- `ADMIN_TOKEN` — proteção por token fixo nas API routes
+- API `GET /api/albums/search` — proxy de busca no Last.fm
+- API `POST /api/albums/add` — adicionar produto + plataformas
+- API `DELETE /api/albums/[id]` — remover produto com cascade
+- Componente `admin-auth.tsx` — formulário de token com sessionStorage
+- Componente `album-search.tsx` — busca Last.fm com debounce 400ms
+- Componente `platform-form.tsx` — checkboxes Amazon/ML/Shopee + campos condicionais
+- Página `/gerenciar` — listagem dos CDs com botão remover
+- Página `/gerenciar/adicionar` — busca + seleção + plataformas + salvar
+- Link "Gerenciar" na nav bar
+
 ## [0.3.0] — 2026-07-05
 
 ### Adicionado

@@ -38,7 +38,7 @@ ROW_TPL = Template("""
     <tr style="border-top: 1px solid #e5e7eb;">
       <td style="padding: 8px;">$title - $artist</td>
       <td style="padding: 8px;">$platform</td>
-      <td style="padding: 8px; text-align: right;">R$ $price</td>
+      <td style="padding: 8px; text-align: right;">R$$ $price</td>
       <td style="padding: 8px; text-align: right; color: $change_color;">$change</td>
     </tr>
 """)
