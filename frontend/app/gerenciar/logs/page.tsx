@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import AdminAuth from "@/components/admin-auth";
 
 interface LogEntry {
@@ -93,7 +94,7 @@ export default function LogsPage() {
             {data ? `${data.total} registro${data.total !== 1 ? "s" : ""}` : ""}
           </p>
         </div>
-        <a
+        <Link
           href="/gerenciar"
           style={{
             padding: "10px 20px",
@@ -107,7 +108,7 @@ export default function LogsPage() {
           }}
         >
           Voltar
-        </a>
+        </Link>
       </div>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>

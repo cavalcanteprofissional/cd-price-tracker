@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AdminAuth from "@/components/admin-auth";
 
@@ -73,7 +74,7 @@ export default function AdminPage() {
       </div>
 
       <div style={{ marginBottom: 20, display: "flex", gap: 12 }}>
-        <a
+        <Link
           href="/gerenciar/adicionar"
           style={{
             padding: "10px 20px",
@@ -87,8 +88,8 @@ export default function AdminPage() {
           }}
         >
           + Adicionar CD
-        </a>
-        <a
+        </Link>
+        <Link
           href="/gerenciar/logs"
           style={{
             padding: "10px 20px",
@@ -102,7 +103,7 @@ export default function AdminPage() {
           }}
         >
           Logs de Scraping
-        </a>
+        </Link>
       </div>
 
       {loading ? (

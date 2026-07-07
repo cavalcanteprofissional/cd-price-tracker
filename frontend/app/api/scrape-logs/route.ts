@@ -8,7 +8,13 @@ const supabase = createClient(
 
 export async function GET(request: Request) {
   const adminToken = request.headers.get("x-admin-token");
-  if (adminToken !== process.env.ADMIN_TOKEN) {
+  const expectedToken = process.env.ADMIN_TOKEN?.trim();
+  if (adminToken !== expectedToken) {
+    console.error("scrape-logs ADMIN_TOKEN mismatch:", {
+      received: adminToken,
+      expectedLength: expectedToken?.length,
+      receivedLength: adminToken?.length,
+    });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

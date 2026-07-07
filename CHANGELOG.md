@@ -1,5 +1,114 @@
 # Changelog
 
+## [0.9.9] — 2026-07-07
+
+### Adicionado
+
+#### Streaming SSE em tempo real (modo local)
+- `trigger/route.ts` — `POST /api/scrape/trigger` reescrito com `spawn` + `TransformStream` + SSE (`text/event-stream`)
+- `scrape-button.tsx` — `handleClick` detecta `content-type: text/event-stream` e lê o `ReadableStream` diretamente
+- Live status aparece como **entry única ℹ️** no topo do painel, substituída a cada evento — sem acumular
+- Resultados estruturados (success/error/not_found) são buscados via **polling em paralelo** durante o streaming, empilhados em tempo real
+- Abort handler no servidor mata o processo filho quando o cliente desconecta
+- Flag `writerClosed` + `safeSse()` para evitar `ERR_INVALID_STATE` em chunks tardios de stdout/stderr
+
+#### Botão de conclusão com resumo
+- Botão mostra `✅ 5 · 2 ⚠️ · 1 ⚪` ao concluir (com fundo verde, ou âmbar se só erros)
+- Banner `🎉` no painel: "5 encontrados · 2 erros · 1 não encontrado · 35s"
+
+#### Textos amigáveis nos logs
+- Linha 2 sempre inicia com a palavra em português: `encontrado`, `não encontrado`, `erro`, `fanmade ignorado`
+- `not_found` não mostra detail redundante ("sem resultados")
+- `success` mostra ` → {raw_title}` só quando agrega info nova
+- Live status limpa prefixo `timestamp [LEVEL] module:` dos logs Python
+
+### Corrigido
+
+#### `writerClosed = true` antes de `safeSse()` — eventos done/error nunca chegavam
+- `trigger/route.ts` — nos handlers `close` e `error`, a flag `writerClosed` era setada **antes** de `safeSse()`, fazendo o cliente nunca receber os eventos de conclusão
+- Status ficava `"running"` até o safety reset de 30s forçar `idle`; botão nunca exibia ✅
+- Corrigido: `writerClosed = true` movido para **após** `safeSse()` em ambos os handlers
+
+#### Perda de estado ao navegar para `/gerenciar/logs`
+- `gerenciar/page.tsx` — `<a href="/gerenciar/logs">` substituído por `<Link>` (causava full page reload, desmontando o layout e perdendo todo estado React)
+- `gerenciar/logs/page.tsx` — `<a href="/gerenciar">` (Voltar) substituído por `<Link>`
+
+### Alterado
+
+#### Simplificação da persistência em sessionStorage
+- 5 `useEffect` de save (status, panelOpen, startedAt, mode, errorMessage) fundidos em **1 único** `useEffect` que serializa tudo num JSON blob
+- Restauração lê o JSON no lugar de 6 chaves individuais
+- Polling não escreve mais `lastUpdateAt`/`knownIds` separadamente
+- Código mais enxuto e menos propenso a race conditions
+
+#### Computados movidos para `useMemo`
+- `btnText`, `btnBg`, `successCount`, `errorCount`, `notFoundCount` agora usam `useMemo` com dependências explícitas
+- Hooks movidos para **antes** do `if (!token) return null` (rules of hooks)
+
+### Observação
+- README não necessita atualização — a arquitetura já descreve "Navbar: ▶ Rodar (live logs)"
+
+### Corrigido
+
+#### Hydration error: sessionStorage no SSR + race condition nos save effects
+- `scrape-button.tsx` — `useState`/`useRef` voltaram a usar valores **default** para garantir match SSR ↔ hidratação
+- `isFirstRender` ref adicionado — **save effects pulam no primeiro ciclo**, evitando o race condition que sobrescrevia o sessionStorage com valores iniciais antes do restore rodar
+- `useEffect` de restore roda depois dos save effects: restaura `status`, `startedAt`, `mode`, `errorMessage`, `panelOpen`, `knownIds`, `lastUpdateAt` do sessionStorage e só então desmarca `isFirstRender`
+- Após o restore, save effects passam a funcionar normalmente, persistindo o estado restaurado
+
+### Alterado
+- Polling continua salvando `lastUpdateAt` e `knownIds` no sessionStorage a cada lote de logs
+- `handleClick` salva `lastUpdateAt` e limpa `knownIds` no início de um novo scrape
+
+## [0.9.7] — 2026-07-07
+
+### Corrigido
+
+#### `ReferenceError: sessionStorage is not defined` no SSR
+- `scrape-button.tsx` — todo acesso a `sessionStorage` nos inicializadores de `useState`/`useRef` agora é envolto em `try/catch`
+- Durante SSR (Server-Side Rendering), `sessionStorage` não existe no Node.js; os inicializadores retornam o valor default silenciosamente
+- No cliente, o estado é restaurado normalmente
+
+## [0.9.6] — 2026-07-07
+
+### Corrigido
+
+#### Botão "▶ Rodar" e painel de logs resetavam ao navegar entre páginas
+- `scrape-button.tsx` — `useState` e `useRef` agora são inicializados **lendo diretamente do sessionStorage** via função inicializadora, em vez de restaurar via `useEffect`
+- Removeu o `useEffect` de restore que causava **race condition**: os save effects rodavam com valores iniciais (`"idle"`, `false`) antes do restore effect atualizar, sobrescrevendo o estado salvo
+- Estado persiste corretamente entre navegações: `status`, `startedAt`, `mode`, `errorMessage`, `panelOpen`, `knownIds`, `lastUpdateAt`
+- Polling retoma automaticamente se `status` era `"running"`
+
+## [0.9.5] — 2026-07-07
+
+### Corrigido
+
+#### ADMIN_TOKEN com caractere `#` interpretado como comentário
+- `.env.local` — token alterado de `HonkaiImpact3rd@#` para `HonkaiImpact3rd` (removeu `#` que era interpretado como início de comentário pelo parser de `.env`, truncando o valor)
+- `trigger/route.ts` — adicionado logging detalhado no mismatch do token (comprimentos recebido vs esperado)
+- `scrape-logs/route.ts` — mesmo logging adicionado
+
+### Adicionado
+
+#### Endpoint de diagnóstico GET /api/scrape/trigger
+- `trigger/route.ts` — novo handler `GET` que retorna os tokens recebido vs esperado (mascarado: length, primeiro/último caractere) para debug rápido de 401
+- Uso: `curl -H "x-admin-token: SEU_TOKEN" http://localhost:3000/api/scrape/trigger`
+
+## [0.9.4] — 2026-07-07
+
+### Corrigido
+
+#### POST /api/scrape/trigger retornava 401 no Windows
+- `trigger/route.ts` — `process.env.ADMIN_TOKEN` agora com `.trim()` para remover `\r` residual de arquivos `.env` com CRLF no Windows
+- `scrape-logs/route.ts` — mesma correção no `ADMIN_TOKEN` para consistência
+
+#### Exec do scraper falhava silenciosamente
+- `trigger/route.ts` — adicionado pre-check `python --version` antes de spawnar o scraper; se Python não estiver disponível, retorna 500 com mensagem clara
+- `trigger/route.ts` — se o `exec` falhar (processo não iniciou), escreve logs de erro no Supabase para cada config ativa, permitindo que o frontend detecte via polling
+
+### Alterado
+- `trigger/route.ts` — adicionado import do `createClient` do Supabase para fallback de logging
+
 ## [0.9.3] — 2026-07-06
 
 ### Corrigido

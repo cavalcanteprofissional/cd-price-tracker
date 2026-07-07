@@ -1,11 +1,43 @@
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import path from "path";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!,
+);
+
+const encoder = new TextEncoder();
+
+function sse(writer: WritableStreamDefaultWriter, data: object) {
+  writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+}
+
+// GET: diagnóstico para debug do token
+export async function GET(request: Request) {
+  const received = request.headers.get("x-admin-token") || "(vazio)";
+  const expected = process.env.ADMIN_TOKEN || "(não definido)";
+  const expectedTrimmed = expected.trim();
+  return NextResponse.json({
+    received,
+    expected_length: expectedTrimmed.length,
+    expected_first: expectedTrimmed.charAt(0),
+    expected_last: expectedTrimmed.charAt(expectedTrimmed.length - 1),
+    match: received === expectedTrimmed,
+  });
+}
 
 export async function POST(request: Request) {
   try {
     const adminToken = request.headers.get("x-admin-token");
-    if (adminToken !== process.env.ADMIN_TOKEN) {
+    const expectedToken = process.env.ADMIN_TOKEN?.trim();
+    if (adminToken !== expectedToken) {
+      console.error("ADMIN_TOKEN mismatch:", {
+        received: adminToken,
+        expectedLength: expectedToken?.length,
+        receivedLength: adminToken?.length,
+      });
       return NextResponse.json({ error: "Unauthorized — token inválido" }, { status: 401 });
     }
 
@@ -44,27 +76,109 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "triggered", started_at: startedAt, mode: "github_actions" });
     }
 
-    // Local: exec python scraper from project root
+    // Local: streaming SSE do Python
     const projectRoot = path.resolve(process.cwd(), "..");
-    console.log("Scrape trigger: local exec from", projectRoot, "cwd:", process.cwd());
+    console.log("Scrape trigger: local streaming from", projectRoot);
 
-    exec(`python -m scraper.main`, {
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
+    let writerClosed = false;
+
+    function safeSse(data: object) {
+      if (!writerClosed) sse(writer, data);
+    }
+
+    // Envia evento de start
+    safeSse({ type: "start", started_at: startedAt, mode: "local" });
+
+    // Pre-check: python disponível?
+    try {
+      await new Promise<void>((resolve, reject) => {
+        exec("python --version", { timeout: 5000 }, (err) => {
+          if (err) reject(new Error("Python não encontrado. Verifique se python está no PATH."));
+          else resolve();
+        });
+      });
+    } catch (e) {
+      safeSse({ type: "error", message: e instanceof Error ? e.message : "Python não disponível" });
+      writerClosed = true;
+      writer.close();
+      return new Response(stream.readable, {
+        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+      });
+    }
+
+    // Spawn Python com stdio pipe para streaming
+    const child = spawn("python", ["-m", "scraper.main"], {
       cwd: projectRoot,
       env: {
         ...process.env,
         SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
       },
-      timeout: 600000,
-    }, (error, stdout, stderr) => {
-      if (error) {
-        console.error("Scrape exec error:", error.message);
-        return;
-      }
-      if (stdout) console.log("Scrape stdout:", stdout.slice(0, 500));
-      if (stderr) console.error("Scrape stderr:", stderr.slice(0, 500));
+      stdio: ["pipe", "pipe", "pipe"],
     });
 
-    return NextResponse.json({ status: "running", started_at: startedAt, mode: "local" });
+    // Forward stdout (prints do Python)
+    child.stdout.on("data", (chunk: Buffer) => {
+      for (const line of chunk.toString().split("\n").filter(Boolean)) {
+        safeSse({ type: "log", text: line });
+      }
+    });
+
+    // Forward stderr (logging do Python — logger.info etc)
+    child.stderr.on("data", (chunk: Buffer) => {
+      for (const line of chunk.toString().split("\n").filter(Boolean)) {
+        safeSse({ type: "log", text: line });
+      }
+    });
+
+    // Processo encerrou
+    child.on("close", async (code: number | null) => {
+      if (code === 0) {
+        safeSse({ type: "done", code });
+      } else {
+        safeSse({ type: "error", message: `Scraper encerrou com código ${code}` });
+        try {
+          const { data: configs } = await supabase
+            .from("product_platform_config")
+            .select("id, product_id")
+            .eq("active", true);
+          if (configs) {
+            const logs = configs.map((cfg: { id: number; product_id: number }) => ({
+              product_platform_config_id: cfg.id,
+              status: "error",
+              raw_title: null,
+              detail: `Scraper encerrou com código ${code}`,
+            }));
+            if (logs.length > 0) await supabase.from("scrape_log").insert(logs);
+          }
+        } catch { /* ignore fallback error */ }
+      }
+      writerClosed = true;
+      writer.close();
+    });
+
+    // Erro ao spawnar (ex: python não encontrado)
+    child.on("error", (err: Error) => {
+      safeSse({ type: "error", message: `Falha ao iniciar: ${err.message}` });
+      writerClosed = true;
+      writer.close();
+    });
+
+    // Cliente desconectou — mata o processo filho
+    request.signal.addEventListener("abort", () => {
+      writerClosed = true;
+      child.kill();
+      writer.close();
+    });
+
+    return new Response(stream.readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (e) {
     console.error("Scrape trigger: erro inesperado na rota:", e);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });

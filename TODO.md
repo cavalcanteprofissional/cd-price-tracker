@@ -141,10 +141,25 @@
 - [x] Timer de tempo decorrido no botão (⏳ 45s)
 - [x] Corrigido: `exec` usa `python -m scraper.main` com cwd na raiz (ModuleNotFoundError)
 - [x] Corrigido: mapear `SUPABASE_URL` de `NEXT_PUBLIC_SUPABASE_URL` no exec (KeyError)
-- [x] Corrigido: polling não depende mais do painel aberto — persiste entre navegações
+- [x] Corrigido: polling não depende mais do painel aberto — polling persiste via sessionStorage entre navegações (corrigido em v0.9.6: estado salvo no sessionStorage para sobreviver a re-mount do componente)
 - [x] Auto-stop após 5min sem logs (meio-termo entre timeout curto e infinito)
 - [x] Indicador "📡 Xs sem atualização" no painel (fica vermelho após 2min)
 - [x] `main.py` — `load_dotenv()` no topo para carregar `scraper/.env` independente do CWD
+- [x] Streaming local via SSE substitui polling — `handleClick` lê `ReadableStream` quando `content-type: text/event-stream`; polling vira fallback apenas GHA
+- [x] Logs do streaming usam visual unificado de 2 linhas (ℹ️  + info — texto na linha 2), mesmo formato dos logs estruturados — sem branching no render
+- [x] Streaming: live status (ℹ️) aparece como entry única no topo, substituída a cada evento; resultados estruturados são buscados ao final e empilhados abaixo
+- [x] Live status simplificado: linha única com ℹ️ + texto, sem `🏪` e sem linha "info" redundante
+- [x] Polling roda em qualquer modo (local + GHA) para logs estruturados, filtrando apenas entries com `product_platform_config` — resultados aparecem em tempo real durante streaming, não só ao final
+- [x] Textos amigáveis: `success` → "encontrado", `not_found` → "não encontrado", `error` → "erro", `skipped_fanmade` → "fanmade ignorado"
+- [x] Live status limpa prefixo `timestamp [LEVEL] module:` do log Python — mostra só a mensagem legível
+- [x] Linha 2 padronizada: sempre inicia com `STATUS_DISPLAY` (encontrado/erro/não encontrado); success mostra ` → {raw_title}` se for diferente do título do produto; not_found sem detail redundante ("sem resultados")
+- [x] Botão de conclusão mostra resumo: `✅ 5 · 2 ⚠️ · 1 ⚪` com fundo verde (ou âmbar se só erros)
+- [x] Banner 🎉 no painel ao concluir: "5 encontrados · 2 erros · 1 não encontrado · 35s"
+- [x] Corrigido: `<a href="/gerenciar/logs">` → `<Link>` em `gerenciar/page.tsx` (causava perda de estado ao navegar)
+- [x] Corrigido: `<a href="/gerenciar">` → `<Link>` em `gerenciar/logs/page.tsx` (Voltar)
+- [x] Corrigido: `ERR_INVALID_STATE` no writer SSE — race entre `close` do Python e chunks pendentes; adicionado flag `writerClosed` para impedir writes após fechamento
+- [x] Corrigido: `writerClosed = true` antes de `safeSse()` impedia entrega dos eventos `done`/`error` ao cliente — botão nunca via conclusão, safety reset forçava `idle` após 30s
+- [x] Simplificado: 5 save effects fundidos em 1 com JSON blob único; `useMemo` nos computados do botão; SSE dispatch extraído para função
 - [ ] Adicionar `GITHUB_PAT` no repositório (GitHub Secret)
 - [ ] Adicionar `GITHUB_PAT` no `.env.local` da Vercel
 
@@ -164,7 +179,18 @@
 ### Bugs encontrados e corrigidos
 
 - [x] `_search_amazon_with_query()` sem `except` — exceções do Playwright propagavam sem tratamento (corrigido em v0.9.2)
+- [x] `POST /api/scrape/trigger` retornava 401 no Windows — `ADMIN_TOKEN` do `.env.local` vinha com `\r` (CRLF) no final, falhando comparação (corrigido em v0.9.4)
+- [x] Botão "▶ Rodar" virava ❌ sem feedback — painel não abria no estado `error`; adicionado `"error"` à visibilidade + mensagem no cabeçalho (corrigido em v0.9.3, refinado em v0.9.4)
+- [x] `exec` do scraper falhava silenciosamente — se Python não estivesse disponível, o frontend ficava 5min polling sem logs e concluía com 0 resultados (corrigido em v0.9.4: pre-check de `python --version` + fallback escreve erro no Supabase)
+- [x] `ADMIN_TOKEN` com `#` era truncado pelo parser de `.env` — token `HonkaiImpact3rd@#` virava `HonkaiImpact3rd@` porque `#` inicia comentário no formato dotenv (corrigido em v0.9.5: removido `#` do token)
+- [x] Botão "▶ Rodar" e painel de logs resetavam ao trocar de página — componente desmontava e todo estado React se perdia (corrigido em v0.9.8: state volta a ser inicializado com valores default para SSR match; restore via `useEffect`; **save effects pulam no 1º ciclo** com `isFirstRender` guard, eliminando race condition)
+- [x] `ReferenceError: sessionStorage is not defined` — funções inicializadoras de `useState`/`useRef` rodam durante SSR onde `sessionStorage` não existe (corrigido em v0.9.8: state usa valores default no servidor, restore ocorre só no cliente via `useEffect`)
 
 ### Bugs encontrados (pendentes)
 
-- [ ] Botão "▶ Rodar" vira ❌ sem feedback — painel não abre no estado `error`; erros do `POST /api/scrape/trigger` não são exibidos ao usuário (v0.9.3)
+_Nenhum no momento._
+
+### Endpoints de diagnóstico
+
+- `GET /api/scrape/trigger` — retorna comparação do token recebido vs esperado (útil para debug de 401)
+  - Uso: `curl -H "x-admin-token: SEU_TOKEN" http://localhost:3000/api/scrape/trigger`
