@@ -122,6 +122,7 @@
 - [x] Mercado Livre: API oficial com OAuth cliente (🚧 AGUARDANDO APROVACAO ML)
 - [x] Shopee: API + Playwright networkidle + __INITIAL_STATE__ (❌ BLOQUEADO)
 - [x] Magazine Luiza: Playwright networkidle + akamai detection (❌ BLOQUEADO)
+- [x] Enjoei: Playwright com extração direta de `a[href*='/p/']` + fallback de slug + dump HTML debug (✅ CORRIGIDO v0.9.10 — selectores genéricos não funcionavam)
 - [x] Scrapers rodam em pipeline semanal com persistência em price_history + scrape_log
 - [x] Stealth global: --disable-blink-features, viewport, locale, timezone, geolocation, anti-detect script
 
@@ -185,6 +186,10 @@
 - [x] `ADMIN_TOKEN` com `#` era truncado pelo parser de `.env` — token `HonkaiImpact3rd@#` virava `HonkaiImpact3rd@` porque `#` inicia comentário no formato dotenv (corrigido em v0.9.5: removido `#` do token)
 - [x] Botão "▶ Rodar" e painel de logs resetavam ao trocar de página — componente desmontava e todo estado React se perdia (corrigido em v0.9.8: state volta a ser inicializado com valores default para SSR match; restore via `useEffect`; **save effects pulam no 1º ciclo** com `isFirstRender` guard, eliminando race condition)
 - [x] `ReferenceError: sessionStorage is not defined` — funções inicializadoras de `useState`/`useRef` rodam durante SSR onde `sessionStorage` não existe (corrigido em v0.9.8: state usa valores default no servidor, restore ocorre só no cliente via `useEffect`)
+- [x] Scraper Enjoei não extraía produtos — seletores genéricos (`[class*='product-card']`) não casavam com classes hasheadas Vue.js do Enjoei; reescrito para extrair direto de `a[href*='/p/']` + wait_for_selector + dump HTML partial (corrigido em v0.9.10)
+- [x] `platformLabels` nos logs só tinha 3 plataformas (amazon, mercado_livre, shopee) — faltavam amazon_us/uk/de, magalu, americanas, casas_bahia, enjoei e as inativas (corrigido em v0.9.10)
+- [ ] Scraper Enjoei — URL `/search?q={}` redirecionava para `/@search?q={}&sid=` (busca de loja vs global); corrigido para `/s?q={}` + extração via API GraphQL `graphql-search-x`. **Continua sem achar produtos** — aguardando debug (v0.9.12)
+- [x] Botão "▶ Rodar" não iniciava visualmente na 2ª execução — safety reset (`idleSeconds > 30`) detectava `mode="local"` e `lastUpdateAt` do run anterior e abortava; corrigido: `handleClick` agora limpa `mode`, `startedAt`, `lastUpdateAt`, `elapsed`, `idleSeconds` antes de iniciar nova execução (corrigido em v0.9.13)
 
 ### Bugs encontrados (pendentes)
 

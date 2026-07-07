@@ -17,6 +17,7 @@ flowchart TB
         ML["Mercado Livre ❌"]
         SHOP["Shopee ❌"]
         MGL["Magazine Luiza ❌"]
+        ENJ["Enjoei 🚧"]
     end
 
     subgraph LastFM["🎵 Last.fm API"]
@@ -155,6 +156,7 @@ cd-price-tracker/
 │   ├── mercadolivre_api.py# ML API oficial OAuth ⏳ pendente
 │   ├── shopee.py          # Shopee ❌ bloqueado
 │   ├── magalu.py          # Magalu ❌ bloqueado
+│   ├── enjoei.py          # Enjoei 🚧 em desenvolvimento
 │   ├── filter.py          # Filtro anti-fanmade
 │   ├── price_parser.py    # "R$ 49,90" → 49.90
 │   ├── alert.py           # Alerta de falha no pipeline

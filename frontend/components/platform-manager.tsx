@@ -12,6 +12,7 @@ const ALL_PLATFORMS = [
   { id: "americanas", label: "Americanas", icon: "🔵" },
   { id: "casas_bahia", label: "Casas Bahia", icon: "🔴" },
   { id: "shopee", label: "Shopee", icon: "🛍️" },
+  { id: "enjoei", label: "Enjoei", icon: "💛" },
 ];
 
 interface PlatformManagerProps {

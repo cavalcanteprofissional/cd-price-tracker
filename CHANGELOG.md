@@ -1,5 +1,61 @@
 # Changelog
 
+## [0.9.13] — 2026-07-07
+
+### Corrigido
+
+#### Botão "▶ Rodar" não iniciava na 2ª execução
+- `scrape-button.tsx` — safety reset (`idleSeconds > 30`) detectava `mode="local"` e `lastUpdateAt` do run anterior e abortava a execução visual
+- `handleClick()` agora limpa `mode`, `startedAt`, `lastUpdateAt`, `elapsed`, `idleSeconds` antes de iniciar nova execução
+- Botão ✕ no painel também limpa `mode` e `startedAt` ao fechar
+
+## [0.9.12] — 2026-07-07
+
+### Alterado
+
+#### Enjoei — URL de busca corrigida + extração via API GraphQL
+- `enjoei.py` — URL alterada de `/search?q={}` para `/s?q={}` (a anterior redirecionava para `/@search?q={}&sid=`, busca de loja específica com 0 resultados)
+- Adicionada extração via API GraphQL (`graphql-search-x`) como fonte primária de produtos
+- Armazenamento completo das respostas da API (não só preview) para parsing
+- `page.evaluate()` com fallback para elementos `[class*="sc-"]`, `[class*="card"]`, `article`, `li[class]`
+- Dump completo do HTML para `%TEMP%/enjoei_{query}.html` para debug
+
+## [0.9.11] — 2026-07-07
+
+### Adicionado
+
+#### Diagnóstico completo no scraper Enjoei
+- `enjoei.py` — logging de todos os links `<a>` da página, ocorrências de "R$", elementos com classe `sc-`, `__NUXT__`/`__INITIAL_STATE__`, interceptação de XHR
+- Salvamento do HTML da página para arquivo temporário
+- Três estratégias de extração em cascata: `a[href*='/p/']` → `page.evaluate()` → regex de preço no body
+
+## [0.9.10] — 2026-07-07
+
+### Adicionado
+
+#### Scraper Enjoei
+- `scraper/enjoei.py` — Playwright + extração de `a[href*='/p/']` + token similarity (🚧 pendente de ajustes)
+- `scraper/main.py` — `import search_enjoei` + `process_enjoei()` + dispatch `elif platform == "enjoei"`
+- `supabase/schema.sql` — `'enjoei'` adicionado ao CHECK constraint
+
+#### Enjoei no frontend
+- `platform-form.tsx`, `platform-manager.tsx` — +`{ id: "enjoei", label: "Enjoei", icon: "💛" }`
+- `price-card.tsx` — +`enjoei: "Enjoei"`
+- `scrape-button.tsx` — +`enjoei: "💛"` em `PLATFORM_ICONS`
+
+#### Gestão de plataformas em modal no /gerenciar
+- `gerenciar/page.tsx` — botão "Plataformas" ao lado de "Remover" que abre modal com `PlatformManager`
+- Card do CD agora é clicável via `<Link>` (capa + título + artista levam ao histórico)
+- Modal com overlay, fecha ao clicar no backdrop e recarrega lista para atualizar badges
+
+#### Dropdown de plataformas completo nos logs
+- `gerenciar/logs/page.tsx` — `platformLabels` expandido de 3 para 13 entradas (todas as plataformas do CHECK constraint)
+
+### Corrigido
+
+#### Logs — plataformas incompletas no filtro
+- `platformLabels` só tinha `amazon`, `mercado_livre`, `shopee` — adicionadas `amazon_us`, `amazon_uk`, `amazon_de`, `magalu`, `americanas`, `casas_bahia`, `submarino`, `carrefour`, `extra`, `enjoei`
+
 ## [0.9.9] — 2026-07-07
 
 ### Adicionado

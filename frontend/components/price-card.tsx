@@ -30,6 +30,7 @@ const platformLabels: Record<string, string> = {
   carrefour: "Carrefour",
   extra: "Extra",
   shopee: "Shopee",
+  enjoei: "Enjoei",
 };
 
 export default function PriceCard({ id, title, artist, coverUrl, prices }: PriceCardProps) {

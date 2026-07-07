@@ -37,9 +37,19 @@ const statusColors: Record<string, string> = {
 };
 
 const platformLabels: Record<string, string> = {
-  amazon: "Amazon",
+  amazon: "Amazon BR",
+  amazon_us: "Amazon US",
+  amazon_uk: "Amazon UK",
+  amazon_de: "Amazon DE",
   mercado_livre: "Mercado Livre",
+  magalu: "Magazine Luiza",
+  americanas: "Americanas",
+  casas_bahia: "Casas Bahia",
+  submarino: "Submarino",
+  carrefour: "Carrefour",
+  extra: "Extra",
   shopee: "Shopee",
+  enjoei: "Enjoei",
 };
 
 export default function LogsPage() {

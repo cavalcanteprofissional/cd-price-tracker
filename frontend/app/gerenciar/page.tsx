@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AdminAuth from "@/components/admin-auth";
+import PlatformManager from "@/components/platform-manager";
 
 interface Product {
   id: string;
@@ -18,6 +19,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [platformTarget, setPlatformTarget] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("admin_token");
@@ -58,6 +60,10 @@ export default function AdminPage() {
       setDeleting(null);
     }
   }
+
+  const platformProduct = platformTarget
+    ? products.find((p) => p.id === platformTarget)
+    : null;
 
   if (!token) {
     if (loading) return null;
@@ -125,6 +131,16 @@ export default function AdminPage() {
                 borderRadius: 8,
               }}
             >
+            <Link
+              href={`/produto/${product.id}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                textDecoration: "none",
+                color: "inherit",
+              }}
+            >
               <div
                 style={{
                   width: 40,
@@ -141,27 +157,29 @@ export default function AdminPage() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 18 }}>💿</div>
                 )}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{product.title}</div>
                 <div style={{ color: "#6b7280", fontSize: 13 }}>{product.artist}</div>
               </div>
-              <div style={{ display: "flex", gap: 4 }}>
-                  {(product.platforms ?? []).map((p) => (
-                    <span
-                      key={p.platform}
-                      style={{
-                        fontSize: 11,
-                        background: "#f3f4f6",
-                        padding: "2px 6px",
-                        borderRadius: 4,
-                        color: "#6b7280",
-                      }}
-                    >
-                      {p.platform === "amazon" ? "BR" : p.platform === "amazon_us" ? "US" : p.platform === "amazon_uk" ? "UK" : p.platform === "amazon_de" ? "DE" : p.platform === "mercado_livre" ? "ML" : p.platform === "magalu" ? "MGL" : p.platform === "americanas" ? "AM" : p.platform === "casas_bahia" ? "CB" : p.platform === "shopee" ? "SP" : p.platform.toUpperCase().slice(0, 3)}
-                    </span>
-                  ))}
-              </div>
-              <button
+            </Link>
+            <div style={{ flex: 1 }} />
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {(product.platforms ?? []).map((p) => (
+                  <span
+                    key={p.platform}
+                    style={{
+                      fontSize: 11,
+                      background: "#f3f4f6",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      color: "#6b7280",
+                    }}
+                  >
+                    {p.platform === "amazon" ? "BR" : p.platform === "amazon_us" ? "US" : p.platform === "amazon_uk" ? "UK" : p.platform === "amazon_de" ? "DE" : p.platform === "mercado_livre" ? "ML" : p.platform === "magalu" ? "MGL" : p.platform === "americanas" ? "AM" : p.platform === "casas_bahia" ? "CB" : p.platform === "shopee" ? "SP" : p.platform.toUpperCase().slice(0, 3)}
+                  </span>
+                ))}
+            </div>
+            <button
                 type="button"
                 onClick={() => handleDelete(product.id)}
                 disabled={deleting === product.id}
@@ -178,8 +196,79 @@ export default function AdminPage() {
               >
                 {deleting === product.id ? "Removendo..." : "Remover"}
               </button>
+              <button
+                type="button"
+                onClick={() => setPlatformTarget(product.id)}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: 13,
+                  color: "#111827",
+                  background: "#f3f4f6",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Plataformas
+              </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {platformTarget && platformProduct && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => { setPlatformTarget(null); loadProducts(); }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 12,
+              padding: 24,
+              maxWidth: 420,
+              width: "90%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              position: "relative",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => { setPlatformTarget(null); loadProducts(); }}
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 12,
+                background: "none",
+                border: "none",
+                fontSize: 20,
+                cursor: "pointer",
+                color: "#6b7280",
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+            <div style={{ marginBottom: 12 }}>
+              <h2 style={{ fontSize: 18, margin: 0 }}>{platformProduct.title}</h2>
+              <p style={{ color: "#6b7280", fontSize: 13, margin: "2px 0 0" }}>{platformProduct.artist}</p>
+            </div>
+            <PlatformManager
+              productId={platformProduct.id}
+              initialPlatforms={(platformProduct.platforms ?? []).map((p) => p.platform)}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -20,6 +20,7 @@ const platforms = [
   { id: "americanas", label: "Americanas", icon: "🔵" },
   { id: "casas_bahia", label: "Casas Bahia", icon: "🔴" },
   { id: "shopee", label: "Shopee", icon: "🛍️" },
+  { id: "enjoei", label: "Enjoei", icon: "💛" },
 ];
 
 export default function PlatformForm({ album, onSave, onCancel, saving }: PlatformFormProps) {

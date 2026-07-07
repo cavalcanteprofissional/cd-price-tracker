@@ -32,7 +32,7 @@ const STATUS_DISPLAY: Record<string, string> = {
 
 const PLATFORM_ICONS: Record<string, string> = {
   amazon: "🇧🇷", amazon_us: "🇺🇸", amazon_uk: "🇬🇧", amazon_de: "🇩🇪",
-  mercado_livre: "🟡", magalu: "🟢", americanas: "🔵", casas_bahia: "🔴", shopee: "🛍️",
+  mercado_livre: "🟡", magalu: "🟢", americanas: "🔵", casas_bahia: "🔴", shopee: "🛍️", enjoei: "💛",
 };
 
 const LOG_PREFIX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \[\w+\] [\w.]+: /;
@@ -151,9 +151,14 @@ export default function ScrapeButton() {
 
     if (!token) return;
     setStatus("running");
+    setMode(null);
+    setStartedAt(null);
     setLogs([]);
     setErrorMessage(null);
+    setElapsed(0);
+    setIdleSeconds(0);
     knownIds.current.clear();
+    lastUpdateAt.current = Date.now();
     setPanelOpen(true);
 
     try {
@@ -317,7 +322,7 @@ export default function ScrapeButton() {
             </Link>
             <button
               type="button"
-               onClick={() => { setPanelOpen(false); if (status === "done" || status === "error") setStatus("idle"); }}
+               onClick={() => { setPanelOpen(false); setMode(null); setStartedAt(null); if (status === "done" || status === "error") setStatus("idle"); }}
               style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#6b7280", padding: 0 }}
             >
               ✕

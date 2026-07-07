@@ -18,6 +18,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from scraper.alert import send_alert
 from scraper.amazon import scrape_amazon, search_amazon
 from scraper.amazon_global import search_amazon_marketplace, MARKETPLACES
+from scraper.enjoei import search_enjoei
 from scraper.filter import is_suspected_fanmade
 from scraper.magalu import search_magalu
 from scraper.mercadolivre import scrape_mercadolivre, try_mercadolivre_api
@@ -271,6 +272,11 @@ def process_shopee(config: dict) -> ScrapeResult:
     return _process_platform_scrape("shopee", config, scrape_shopee, search_query)
 
 
+def process_enjoei(config: dict) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("enjoei", config, search_enjoei, search_query)
+
+
 def send_digest():
     try:
         from scraper.email_digest import send_digest_emails
@@ -306,6 +312,8 @@ def main():
                 result = process_magalu(cfg)
             elif platform == "shopee":
                 result = process_shopee(cfg)
+            elif platform == "enjoei":
+                result = process_enjoei(cfg)
             elif platform in ("americanas", "casas_bahia", "submarino", "carrefour", "extra"):
                 logger.warning("Scraper nao implementado para: %s", platform)
                 continue
