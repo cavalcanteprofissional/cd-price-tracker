@@ -10,6 +10,8 @@ const supabase = createClient(
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const recentSubscriptions = new Map<string, number>();
+
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
@@ -22,6 +24,13 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json({ error: "Formato de email inválido" }, { status: 400 });
     }
+
+    const now = Date.now();
+    const lastAttempt = recentSubscriptions.get(email.toLowerCase());
+    if (lastAttempt && now - lastAttempt < 60000) {
+      return NextResponse.json({ error: "Aguarde 1 minuto antes de tentar novamente." }, { status: 429 });
+    }
+    recentSubscriptions.set(email.toLowerCase(), now);
 
     const confirmationToken = randomUUID();
     const unsubscribeToken = randomUUID();

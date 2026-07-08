@@ -1,43 +1,44 @@
 import pytest
-from scraper.amazon import _normalize, _token_similarity, scrape_amazon, search_amazon
+from scraper.utils import normalize, token_similarity
+from scraper.amazon import scrape_amazon, search_amazon
 
 
 class TestNormalize:
     def test_lowercase(self):
-        assert _normalize("Thriller") == "thriller"
+        assert normalize("Thriller") == "thriller"
 
     def test_remove_accents(self):
-        assert _normalize("João") == "joao"
+        assert normalize("João") == "joao"
 
     def test_alphanumeric_only(self):
-        assert _normalize("CD Original! @ #").strip() == "cd original"
+        assert normalize("CD Original! @ #").strip() == "cd original"
 
     def test_empty(self):
-        assert _normalize("") == ""
+        assert normalize("") == ""
 
     def test_spaces(self):
-        assert _normalize("  espaços  ") == "espacos"
+        assert normalize("  espaços  ") == "espacos"
 
 
 class TestTokenSimilarity:
     def test_identical(self):
-        assert _token_similarity("Thriller Michael Jackson", "Thriller Michael Jackson") == 1.0
+        assert token_similarity("Thriller Michael Jackson", "Thriller Michael Jackson") == 1.0
 
     def test_partial(self):
-        sim = _token_similarity("Thriller Michael Jackson", "Thriller Jackson")
+        sim = token_similarity("Thriller Michael Jackson", "Thriller Jackson")
         assert sim == pytest.approx(0.666, rel=0.01)
 
     def test_no_overlap(self):
-        assert _token_similarity("Thriller", "Abbey Road") == 0.0
+        assert token_similarity("Thriller", "Abbey Road") == 0.0
 
     def test_empty_a(self):
-        assert _token_similarity("", "Thriller") == 0.0
+        assert token_similarity("", "Thriller") == 0.0
 
     def test_empty_both(self):
-        assert _token_similarity("", "") == 0.0
+        assert token_similarity("", "") == 0.0
 
     def test_case_and_accent(self):
-        assert _token_similarity("João Silva", "joao silva") == 1.0
+        assert token_similarity("João Silva", "joao silva") == 1.0
 
 
 class TestScrapeAmazon:

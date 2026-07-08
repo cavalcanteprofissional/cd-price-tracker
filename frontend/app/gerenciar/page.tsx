@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AdminAuth from "@/components/admin-auth";
 import PlatformManager from "@/components/platform-manager";
+import { PLATFORM_BADGES } from "@/lib/platforms";
 
 interface Product {
   id: string;
@@ -34,10 +35,13 @@ export default function AdminPage() {
 
   async function loadProducts() {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("products")
       .select(`id, title, artist, cover_url, product_platform_config ( platform )`)
       .order("title");
+    if (error) {
+      console.error("Erro ao carregar produtos:", error);
+    }
     setProducts((data ?? []) as any);
     setLoading(false);
   }
@@ -175,7 +179,7 @@ export default function AdminPage() {
                       color: "#6b7280",
                     }}
                   >
-                    {p.platform === "amazon" ? "BR" : p.platform === "amazon_us" ? "US" : p.platform === "amazon_uk" ? "UK" : p.platform === "amazon_de" ? "DE" : p.platform === "mercado_livre" ? "ML" : p.platform === "magalu" ? "MGL" : p.platform === "americanas" ? "AM" : p.platform === "casas_bahia" ? "CB" : p.platform === "shopee" ? "SP" : p.platform.toUpperCase().slice(0, 3)}
+                    {PLATFORM_BADGES[p.platform] ?? p.platform.toUpperCase().slice(0, 3)}
                   </span>
                 ))}
             </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { AlbumResult } from "./album-search";
+import { ALL_PLATFORMS } from "@/lib/platforms";
 
 interface PlatformFormProps {
   album: AlbumResult;
@@ -10,21 +11,8 @@ interface PlatformFormProps {
   saving: boolean;
 }
 
-const platforms = [
-  { id: "amazon", label: "Amazon BR", icon: "🇧🇷" },
-  { id: "amazon_us", label: "Amazon US", icon: "🇺🇸" },
-  { id: "amazon_uk", label: "Amazon UK", icon: "🇬🇧" },
-  { id: "amazon_de", label: "Amazon DE", icon: "🇩🇪" },
-  { id: "mercado_livre", label: "Mercado Livre", icon: "🟡" },
-  { id: "magalu", label: "Magazine Luiza", icon: "🟢" },
-  { id: "americanas", label: "Americanas", icon: "🔵" },
-  { id: "casas_bahia", label: "Casas Bahia", icon: "🔴" },
-  { id: "shopee", label: "Shopee", icon: "🛍️" },
-  { id: "enjoei", label: "Enjoei", icon: "💛" },
-];
-
 export default function PlatformForm({ album, onSave, onCancel, saving }: PlatformFormProps) {
-  const [selected, setSelected] = useState<Set<string>>(new Set(platforms.map(p => p.id)));
+  const [selected, setSelected] = useState<Set<string>>(new Set(ALL_PLATFORMS.map(p => p.id)));
 
   function toggle(platformId: string) {
     setSelected((prev) => {
@@ -59,7 +47,7 @@ export default function PlatformForm({ album, onSave, onCancel, saving }: Platfo
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {platforms.map((pf) => (
+        {ALL_PLATFORMS.map((pf) => (
           <label
             key={pf.id}
             style={{

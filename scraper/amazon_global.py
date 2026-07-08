@@ -3,7 +3,8 @@ import random
 import time
 from urllib.parse import quote
 
-from scraper.amazon import _extract_candidates, _normalize, scrape_amazon as _scrape_amazon_product
+from scraper.amazon import _extract_candidates, scrape_amazon as _scrape_amazon_product
+from scraper.utils import normalize, token_similarity
 
 logger = logging.getLogger(__name__)
 
@@ -55,14 +56,14 @@ def search_amazon_marketplace(title: str, artist: str, context, marketplace: str
         return None
 
     # Tokens exclusivos do álbum (exclui tokens do artista)
-    expected_tokens = set(_normalize(f"{title} {artist}").split())
-    artist_tokens = set(_normalize(artist).split())
+    expected_tokens = set(normalize(f"{title} {artist}").split())
+    artist_tokens = set(normalize(artist).split())
     album_tokens = expected_tokens - artist_tokens
 
     def score(candidate: dict) -> float:
-        s = _token_similarity(f"{title} {artist}", candidate["title"])
+        s = token_similarity(f"{title} {artist}", candidate["title"])
         if album_tokens:
-            title_norm = _normalize(candidate["title"])
+            title_norm = normalize(candidate["title"])
             has_album_token = any(t in title_norm for t in album_tokens)
             if not has_album_token:
                 s *= 0.3
@@ -134,6 +135,4 @@ def _scrape_product_page(product_url: str, context, marketplace: str) -> dict | 
     return result
 
 
-def _token_similarity(a: str, b: str) -> float:
-    from scraper.amazon import _token_similarity as _ts
-    return _ts(a, b)
+

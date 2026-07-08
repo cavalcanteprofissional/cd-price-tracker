@@ -14,30 +14,12 @@ function sse(writer: WritableStreamDefaultWriter, data: object) {
   writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 }
 
-// GET: diagnóstico para debug do token
-export async function GET(request: Request) {
-  const received = request.headers.get("x-admin-token") || "(vazio)";
-  const expected = process.env.ADMIN_TOKEN || "(não definido)";
-  const expectedTrimmed = expected.trim();
-  return NextResponse.json({
-    received,
-    expected_length: expectedTrimmed.length,
-    expected_first: expectedTrimmed.charAt(0),
-    expected_last: expectedTrimmed.charAt(expectedTrimmed.length - 1),
-    match: received === expectedTrimmed,
-  });
-}
-
 export async function POST(request: Request) {
   try {
     const adminToken = request.headers.get("x-admin-token");
     const expectedToken = process.env.ADMIN_TOKEN?.trim();
     if (adminToken !== expectedToken) {
-      console.error("ADMIN_TOKEN mismatch:", {
-        received: adminToken,
-        expectedLength: expectedToken?.length,
-        receivedLength: adminToken?.length,
-      });
+      console.warn("ADMIN_TOKEN mismatch");
       return NextResponse.json({ error: "Unauthorized — token inválido" }, { status: 401 });
     }
 
@@ -138,21 +120,6 @@ export async function POST(request: Request) {
         safeSse({ type: "done", code });
       } else {
         safeSse({ type: "error", message: `Scraper encerrou com código ${code}` });
-        try {
-          const { data: configs } = await supabase
-            .from("product_platform_config")
-            .select("id, product_id")
-            .eq("active", true);
-          if (configs) {
-            const logs = configs.map((cfg: { id: number; product_id: number }) => ({
-              product_platform_config_id: cfg.id,
-              status: "error",
-              raw_title: null,
-              detail: `Scraper encerrou com código ${code}`,
-            }));
-            if (logs.length > 0) await supabase.from("scrape_log").insert(logs);
-          }
-        } catch { /* ignore fallback error */ }
       }
       writerClosed = true;
       writer.close();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { PLATFORM_LABELS, PLATFORM_ICONS } from "@/lib/platforms";
 
 interface PriceItem {
   platform: string;
@@ -16,22 +17,6 @@ interface PriceCardProps {
   coverUrl: string | null;
   prices: PriceItem[];
 }
-
-const platformLabels: Record<string, string> = {
-  amazon: "Amazon BR",
-  amazon_us: "Amazon US",
-  amazon_uk: "Amazon UK",
-  amazon_de: "Amazon DE",
-  mercado_livre: "Mercado Livre",
-  magalu: "Magazine Luiza",
-  americanas: "Americanas",
-  casas_bahia: "Casas Bahia",
-  submarino: "Submarino",
-  carrefour: "Carrefour",
-  extra: "Extra",
-  shopee: "Shopee",
-  enjoei: "Enjoei",
-};
 
 export default function PriceCard({ id, title, artist, coverUrl, prices }: PriceCardProps) {
   const router = useRouter();
@@ -81,9 +66,9 @@ export default function PriceCard({ id, title, artist, coverUrl, prices }: Price
 
       {prices.length > 0 && (
         <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {prices.map((p, i) => (
+          {prices.map((p) => (
             <a
-              key={i}
+              key={`${p.platform}-${p.price}`}
               href={p.listing_url}
               target="_blank"
               rel="noopener noreferrer"
@@ -100,7 +85,7 @@ export default function PriceCard({ id, title, artist, coverUrl, prices }: Price
                 color: "inherit",
               }}
             >
-              {platformLabels[p.platform] ?? p.platform}: <strong>R$ {Number(p.price).toFixed(2)}</strong>
+              {PLATFORM_LABELS[p.platform] ?? p.platform}: <strong>R$ {Number(p.price).toFixed(2)}</strong>
             </a>
           ))}
         </div>

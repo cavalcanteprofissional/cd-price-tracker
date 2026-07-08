@@ -7,7 +7,7 @@ interface Props {
 }
 
 async function getProduct(id: string) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("products")
     .select(`
       id, title, artist, cover_url,
@@ -18,6 +18,11 @@ async function getProduct(id: string) {
     `)
     .eq("id", id)
     .single();
+
+  if (error) {
+    console.error("Erro ao carregar produto:", error);
+    return null;
+  }
 
   return data;
 }

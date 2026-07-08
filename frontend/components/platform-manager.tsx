@@ -1,19 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-const ALL_PLATFORMS = [
-  { id: "amazon", label: "Amazon BR", icon: "🇧🇷" },
-  { id: "amazon_us", label: "Amazon US", icon: "🇺🇸" },
-  { id: "amazon_uk", label: "Amazon UK", icon: "🇬🇧" },
-  { id: "amazon_de", label: "Amazon DE", icon: "🇩🇪" },
-  { id: "mercado_livre", label: "Mercado Livre", icon: "🟡" },
-  { id: "magalu", label: "Magazine Luiza", icon: "🟢" },
-  { id: "americanas", label: "Americanas", icon: "🔵" },
-  { id: "casas_bahia", label: "Casas Bahia", icon: "🔴" },
-  { id: "shopee", label: "Shopee", icon: "🛍️" },
-  { id: "enjoei", label: "Enjoei", icon: "💛" },
-];
+import { useEffect, useRef, useState } from "react";
+import { ALL_PLATFORMS } from "@/lib/platforms";
 
 interface PlatformManagerProps {
   productId: string;
@@ -26,6 +14,7 @@ export default function PlatformManager({ productId, initialPlatforms }: Platfor
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const initialRef = useRef(initialPlatforms);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("admin_token");
@@ -34,7 +23,10 @@ export default function PlatformManager({ productId, initialPlatforms }: Platfor
   }, []);
 
   useEffect(() => {
-    setSelected(new Set(initialPlatforms));
+    if (initialRef.current !== initialPlatforms) {
+      setSelected(new Set(initialPlatforms));
+      initialRef.current = initialPlatforms;
+    }
   }, [initialPlatforms]);
 
   function toggle(platformId: string) {

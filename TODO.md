@@ -195,7 +195,30 @@
 
 _Nenhum no momento._
 
-### Endpoints de diagnóstico
+### Melhorias de segurança e qualidade (v0.9.14)
 
-- `GET /api/scrape/trigger` — retorna comparação do token recebido vs esperado (útil para debug de 401)
-  - Uso: `curl -H "x-admin-token: SEU_TOKEN" http://localhost:3000/api/scrape/trigger`
+| # | Item | Status |
+|---|------|--------|
+| 1 | `scraper/.env` renomeado para `.env.local` + `.gitignore` cobre ambos | ✅ |
+| 2 | `ADMIN_TOKEN` removido de logs de erro (`console.error` → `console.warn` sem valores) | ✅ |
+| 3 | `AbortController` adicionado ao SSE reader + cleanup no unmount | ✅ |
+| 4 | `parse_br_price(None)` → retorna `0.0` em vez de crash | ✅ |
+| 5 | TOCTOU race condition no sync de plataformas | ⏳ Pendente (requer SQL) |
+| 6 | Erro flood removido: `trigger/route.ts` não insere logs para todas configs ao falhar | ✅ |
+| 7 | Índice em `confirmation_token` | ⏳ Pendente (requer SQL) |
+| 8 | `scraper/.env` → `.env.local` + `scraper/.env` adicionado ao `.gitignore` | ✅ |
+| 9 | `os.environ["KEY"]` → `os.environ.get("KEY", "")` em `supabase_client.py`, `alert.py`, `email_digest.py` | ✅ |
+| 10 | Chromium reiniciado por plataforma | 🔄 Não resolvido (performance) |
+| 11 | Debug endpoint `GET /api/scrape/trigger` removido | ✅ |
+| 12 | Rate limiting no subscribe (1 minuto entre tentativas) | ✅ |
+| 13 | `_normalize`, `_token_similarity`, `_first_selector`, `_best_match` extraídos para `scraper/utils.py` | ✅ |
+| 14 | Lista de plataformas centralizada em `frontend/lib/platforms.ts` (elimina duplicação em 5 componentes) | ✅ |
+| 15 | RLS pendente nas 3 tabelas | ⏳ Pendente (requer SQL) |
+| 16 | Subprocess Python recebe apenas env vars necessárias (não `...process.env`) | ❌ Revertido — whitelist quebrou `dotenv` e outros módulos Python; restaurado `...process.env` com override apenas de `SUPABASE_URL` |
+| 17 | Erro do Supabase tratado em `gerenciar/page.tsx` e `produto/[id]/page.tsx` | ✅ |
+| 18 | `offset` com limite máximo de 10000 em `scrape-logs/route.ts` | ✅ |
+| 19 | `params.id` validado em `albums/add/route.ts` | ✅ |
+| 20 | `ErrorBoundary` component criado | ✅ |
+| 21 | `PlatformManager`: `initialPlatforms` não reseta seleção do usuário em re-renders | ✅ |
+| 22 | Array index como key substituído em `price-card.tsx` | ✅ |
+| 23 | Testes refatorados para `scraper.utils` + teste `parse_br_price(None)` + novo `test_utils.py` | ✅ |

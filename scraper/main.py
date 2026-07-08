@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Carrega .env da pasta scraper/ antes de qualquer import que leia env vars
-load_dotenv(Path(__file__).parent / ".env")
+load_dotenv(Path(__file__).parent / ".env.local")
 
 from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth

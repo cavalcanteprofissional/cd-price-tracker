@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminAuth from "@/components/admin-auth";
+import { PLATFORM_LABELS } from "@/lib/platforms";
 
 interface LogEntry {
   id: string;
@@ -36,21 +37,7 @@ const statusColors: Record<string, string> = {
   skipped_fanmade: "#6b7280",
 };
 
-const platformLabels: Record<string, string> = {
-  amazon: "Amazon BR",
-  amazon_us: "Amazon US",
-  amazon_uk: "Amazon UK",
-  amazon_de: "Amazon DE",
-  mercado_livre: "Mercado Livre",
-  magalu: "Magazine Luiza",
-  americanas: "Americanas",
-  casas_bahia: "Casas Bahia",
-  submarino: "Submarino",
-  carrefour: "Carrefour",
-  extra: "Extra",
-  shopee: "Shopee",
-  enjoei: "Enjoei",
-};
+
 
 export default function LogsPage() {
   const [token, setToken] = useState<string | null>(null);
@@ -149,7 +136,7 @@ export default function LogsPage() {
           }}
         >
           <option value="">Todas as plataformas</option>
-          {Object.entries(platformLabels).map(([k, v]) => (
+          {Object.entries(PLATFORM_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
@@ -191,7 +178,7 @@ export default function LogsPage() {
                         padding: "2px 8px",
                         borderRadius: 4,
                       }}>
-                        {platform ? (platformLabels[platform] ?? platform) : "—"}
+                        {platform ? (PLATFORM_LABELS[platform] ?? platform) : "—"}
                       </span>
                     </td>
                     <td style={{ padding: "10px 12px" }}>

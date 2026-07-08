@@ -2,8 +2,9 @@ import logging
 import random
 import re
 import time
-import unicodedata
 from urllib.parse import quote
+
+from scraper.utils import normalize, token_similarity
 
 logger = logging.getLogger(__name__)
 
@@ -21,21 +22,6 @@ AMAZON_SEARCH_SELECTORS = {
     "price_offscreen": ".a-price .a-offscreen",
     "link": "h2 a",
 }
-
-
-def _normalize(text: str) -> str:
-    text = text.lower().strip()
-    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
-    return re.sub(r"[^a-z0-9\s]", "", text)
-
-
-def _token_similarity(a: str, b: str) -> float:
-    a_tokens = set(_normalize(a).split())
-    b_tokens = set(_normalize(b).split())
-    if not a_tokens or not b_tokens:
-        return 0.0
-    intersection = a_tokens & b_tokens
-    return len(intersection) / max(len(a_tokens), len(b_tokens))
 
 
 def scrape_amazon(amazon_url: str, context) -> dict | None:
@@ -215,16 +201,16 @@ def search_amazon(title: str, artist: str, context) -> dict | None:
         return None
 
     expected = f"{title} {artist}"
-    artist_tokens = set(_normalize(artist).split())
+    artist_tokens = set(normalize(artist).split())
 
     def candidate_score(c):
-        score = _token_similarity(expected, c["title"])
+        score = token_similarity(expected, c["title"])
         if score > 0:
             return score
         # Se o titulo nao contem tokens do artista, verificar no texto completo
         info_text = c.get("info", "")
         if info_text:
-            info_norm = _normalize(info_text)
+            info_norm = normalize(info_text)
             if any(t in info_norm for t in artist_tokens):
                 return 0.15  # bonus baixo por artista presente
         return 0.0

@@ -7,6 +7,8 @@ from urllib.parse import quote
 
 import httpx
 
+from scraper.utils import first_selector
+
 logger = logging.getLogger(__name__)
 
 
@@ -204,7 +206,7 @@ def _extract_from_page(search_query: str, context) -> list[dict]:
         results = []
         for item in items[:20]:
             try:
-                title_el = _first_selector(item, [
+                title_el = first_selector(item, [
                     "div[data-sqe='name']",
                     "div[class*='name']",
                     "div[class*='title']",
@@ -213,14 +215,14 @@ def _extract_from_page(search_query: str, context) -> list[dict]:
                     continue
                 title = title_el.text_content().strip()
 
-                price_el = _first_selector(item, [
+                price_el = first_selector(item, [
                     "span[data-sqe='price']",
                     "span[class*='price']",
                     "div[class*='price']",
                 ])
                 price_text = price_el.text_content().strip() if price_el else "0"
 
-                link_el = _first_selector(item, [
+                link_el = first_selector(item, [
                     "a[data-sqe='link']",
                     "a[class*='item-link']",
                     "a[href*='/product/']",
@@ -250,12 +252,7 @@ def _extract_from_page(search_query: str, context) -> list[dict]:
             page.close()
 
 
-def _first_selector(parent, selectors: list[str]):
-    for sel in selectors:
-        el = parent.query_selector(sel)
-        if el:
-            return el
-    return None
+
 
 
 def scrape_shopee(search_query: str, context) -> list[dict]:

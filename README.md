@@ -1,4 +1,4 @@
-# 💿 CD Price Tracker
+# 💿 CD Price Tracker <sup><sub>v0.9.14</sub></sup>
 
 Acompanhe os preços dos seus CDs favoritos em várias lojas brasileiras. Scraping automático todo dia, histórico em gráfico, e um painel pra você gerenciar sua coleção.
 
@@ -17,7 +17,7 @@ flowchart TB
         ML["Mercado Livre ❌"]
         SHOP["Shopee ❌"]
         MGL["Magazine Luiza ❌"]
-        ENJ["Enjoei 🚧"]
+        ENJ["Enjoei ⚠️"]
     end
 
     subgraph LastFM["🎵 Last.fm API"]
@@ -78,7 +78,7 @@ playwright install chromium
 cd frontend && npm install
 
 # .env
-cp scraper/.env.example scraper/.env
+cp scraper/.env.example scraper/.env.local
 cp frontend/.env.example frontend/.env.local
 # Preencha SUPABASE_URL, SERVICE_KEY, ADMIN_TOKEN, etc.
 
@@ -120,17 +120,18 @@ Filtrar por artista: [Michael Jackson] [Pink Floyd] [Radiohead]
 
 ## 🔧 Status dos scrapers
 
-| Loja | Scraper | Funcionando? | Observação |
+| Loja | Scraper | Status | Extrator |
 |---|---|---|---|
-| Amazon BR | `amazon.py` | ✅ Sim | Busca automática + fallback de seletores. O mais confiável. |
-| Amazon US | `amazon_global.py` | ✅ Sim | Mesmo código, domínio `.com`, moeda USD |
-| Amazon UK | `amazon_global.py` | ✅ Sim | Domínio `.co.uk`, moeda GBP. Matching com penalidade de álbum |
-| Amazon DE | `amazon_global.py` | ✅ Sim | Domínio `.de`, moeda EUR. Matching com penalidade de álbum |
-| Mercado Livre | `mercadolivre.py` | ❌ Bloqueado | CAPTCHA anti-bot agressivo (Akamai). API OAuth pendente de aprovação |
+| Amazon BR | `amazon.py` | ✅ Funcionando | Playwright + busca automática + fallback de seletores |
+| Amazon US | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.com`, moeda USD |
+| Amazon UK | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.co.uk`, moeda GBP, penalidade de álbum |
+| Amazon DE | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.de`, moeda EUR, penalidade de álbum |
+| Enjoei | `enjoei.py` | ⚠️ Instável | API GraphQL + Playwright DOM + page.evaluate() — 3 estratégias em cascata |
+| Mercado Livre | `mercadolivre.py` | ❌ Bloqueado | CAPTCHA Akamai + API OAuth pendente |
 | Shopee | `shopee.py` | ❌ Bloqueado | Redireciona pra verificação de tráfego |
-| Magazine Luiza | `magalu.py` | ❌ Bloqueado | Akamai 403 na primeira requisição |
+| Mag. Luiza | `magalu.py` | ❌ Bloqueado | Akamai 403 na primeira requisição |
 
-**Resumo:** Amazon funciona 100% (BR + US + UK + DE). As lojas brasileiras usam anti-bot pesado (Akamai, DataDome) que bloqueia até Playwright com stealth. O plano é integrar **API oficial do Mercado Livre** (OAuth) e **Google Shopping API** como fontes alternativas.
+**Resumo:** Amazon BR + Global funcionam 100%. Enjoei em desenvolvimento com 3 estratégias de extração em cascata (API → DOM → evaluate). As demais lojas brasileiras usam anti-bot pesado (Akamai, DataDome) que bloqueia até Playwright com stealth. Plano futuro: **API oficial Mercado Livre** (OAuth) e **Google Shopping API** como fontes alternativas.
 
 ## 📦 Stack
 
@@ -141,7 +142,7 @@ Filtrar por artista: [Michael Jackson] [Pink Floyd] [Radiohead]
 | Banco de dados | Supabase (free tier — Postgres + RLS + API) |
 | Validação de álbuns | Last.fm API |
 | Frontend | Next.js 14 (App Router) + Recharts |
-| Testes | Pytest (99 testes — todos mockados) |
+| Testes | Pytest (73 unit + 25 mock = 99 testes) |
 | Notificações | Resend (futuro) |
 
 ## 📁 Estrutura do projeto
@@ -156,8 +157,9 @@ cd-price-tracker/
 │   ├── mercadolivre_api.py# ML API oficial OAuth ⏳ pendente
 │   ├── shopee.py          # Shopee ❌ bloqueado
 │   ├── magalu.py          # Magalu ❌ bloqueado
-│   ├── enjoei.py          # Enjoei 🚧 em desenvolvimento
+│   ├── enjoei.py          # Enjoei ⚠️ instável (API + DOM + evaluate)
 │   ├── filter.py          # Filtro anti-fanmade
+│   ├── utils.py           # normalize, token_similarity, first_selector, best_match
 │   ├── price_parser.py    # "R$ 49,90" → 49.90
 │   ├── alert.py           # Alerta de falha no pipeline
 │   └── email_digest.py    # Digest com variação de preços
@@ -170,14 +172,17 @@ cd-price-tracker/
 │   │   │   ├── scrape/trigger     # POST ▶ Rodar
 │   │   │   └── albums/[id]/platforms  # PATCH gerenciar lojas
 │   │   └── layout.tsx             # Navbar com ▶ Rodar
-│   └── components/
-│       ├── scrape-button.tsx      # Botão ▶ Rodar + live logs
-│       ├── platform-manager.tsx   # Gerenciar lojas do CD
-│       ├── platform-form.tsx      # Formulário de adicionar (todas marcadas)
-│       ├── album-search.tsx       # Busca Last.fm
-│       ├── admin-auth.tsx         # Login admin
-│       ├── price-card.tsx         # Card de preço
-│       └── price-chart.tsx        # Gráfico recharts
+    │   ├── components/
+    │   │   ├── scrape-button.tsx      # Botão ▶ Rodar + live logs
+    │   │   ├── platform-manager.tsx   # Gerenciar lojas do CD
+    │   │   ├── platform-form.tsx      # Formulário de adicionar (todas marcadas)
+    │   │   ├── album-search.tsx       # Busca Last.fm
+    │   │   ├── admin-auth.tsx         # Login admin
+    │   │   ├── error-boundary.tsx     # ErrorBoundary classe
+    │   │   ├── price-card.tsx         # Card de preço
+    │   │   └── price-chart.tsx        # Gráfico recharts
+    │   └── lib/
+    │       └── platforms.ts          # ALL_PLATFORMS, labels, icons, badges
 ├── supabase/              # SQL do banco
 ├── tests/                 # 99 testes mockados
 └── .github/workflows/     # CI/CD
@@ -185,28 +190,31 @@ cd-price-tracker/
 
 ## 📊 Dashboard
 
-Quando você abre a home, vê os CDs assim:
+Na home você vê o grid completo dos CDs com o último preço de cada loja:
 
 ```
-┌──────────────────────────────────────┐
-│  💿  Thriller                        │
-│      Michael Jackson                 │
-│                                      │
-│  🇧🇷 Amazon: R$ 44,90       🛒       │
-│  🇺🇸 Amazon US: $38,95      🛒       │
-│  🇬🇧 Amazon UK: £32,50      🛒       │
-│  🇩🇪 Amazon DE: €36,20      🛒       │
-│  🟡 Mercado Livre: indisponível      │
-│  🟢 Magazine Luiza: indisponível     │
-│  🛍️ Shopee: R$ 39,90                │
-└──────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│  💿  Thriller                            │
+│      Michael Jackson                     │
+│                                          │
+│  🇧🇷 Amazon BR    R$ 44,90  🛒           │
+│  🇺🇸 Amazon US    $ 12,95   🛒           │
+│  🇬🇧 Amazon UK    £ 11,20   🛒           │
+│  🇩🇪 Amazon DE    € 13,40   🛒           │
+│  🟡 Mercado Livre  —  sem preço          │
+│  🛍️ Shopee        R$ 39,90  🛒          │
+│  💛 Enjoei        R$ 52,00  🛒          │
+└──────────────────────────────────────────┘
 ```
 
-Clica no preço → abre o anúncio. Clica no card → abre o gráfico do histórico.
+**Clique no preço** → abre o anúncio direto na loja.  
+**Clique no card** → abre página de detalhe com gráfico do histórico + gerenciamento de plataformas.
+
+Na navbar, o botão **▶ Rodar** executa o scraper na hora com logs ao vivo via SSE — sem precisar esperar o cron diário.
 
 ## 🧪 Testes
 
-99 testes, zero chamadas externas. Tudo mockado com pytest-mock.
+**73 testes unitários** + 25 testes com Playwright mockado (99 total). Zero chamadas externas. Tudo mockado com pytest-mock.
 
 | Arquivo | O que testa |
 |---|---|
@@ -216,7 +224,8 @@ Clica no preço → abre o anúncio. Clica no card → abre o gráfico do histó
 | `test_shopee.py` | API + fallback Playwright |
 | `test_mercadolivre.py` | API + Playwright fallback |
 | `test_models.py` | Dataclasses `ScrapedProduct` e `ScrapeResult` |
-| `test_price_parser.py` | 10 formatos de preço brasileiro |
+| `test_price_parser.py` | 11 formatos de preço brasileiro (inclui `None`) |
+| `test_utils.py` | normalize, token_similarity, first_selector, best_match |
 | `test_email_digest.py` | Renderização do template HTML |
 | `test_alert.py` | Envio de alerta por email |
 | `test_validate_albums.py` | Last.fm client, score, imagem |

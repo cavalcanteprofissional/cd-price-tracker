@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { title, artist, cover_url, lastfm_url, release_date, genre, platforms } = body;
 
-  if (!title || !artist || !platforms || !Array.isArray(platforms) || platforms.length === 0) {
+    if (!title || typeof title !== "string" || !artist || typeof artist !== "string" || !platforms || !Array.isArray(platforms) || platforms.length === 0) {
     console.warn("POST /api/albums/add — invalid body: %j", { title, artist, platforms });
     return NextResponse.json({ error: "title, artist, and at least one platform required" }, { status: 400 });
   }

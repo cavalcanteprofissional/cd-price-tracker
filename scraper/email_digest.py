@@ -8,7 +8,7 @@ from scraper.supabase_client import supabase
 
 logger = logging.getLogger(__name__)
 
-resend.api_key = os.environ["RESEND_API_KEY"]
+resend.api_key = os.environ.get("RESEND_API_KEY", "")
 
 
 HTML_TPL = Template("""

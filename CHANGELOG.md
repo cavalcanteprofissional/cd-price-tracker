@@ -1,5 +1,65 @@
 # Changelog
 
+## [0.9.14] — 2026-07-08
+
+### Segurança
+
+#### Env vars — fallback + whitelist reversão
+- `scraper/supabase_client.py`, `alert.py`, `email_digest.py` — `os.environ["KEY"]` → `os.environ.get("KEY", "")` (evita `KeyError` crash)
+- `trigger/route.ts` — `GET /api/scrape/trigger` removido (vazava estrutura do token)
+- `trigger/route.ts` — subprocess Python voltou a usar `...process.env` (whitelist quebrou `dotenv` e módulos Python)
+- `ADMIN_TOKEN` removido de `console.error` no `trigger/route.ts` e `scrape-logs/route.ts` (agora `console.warn` sem vazar token)
+
+#### RLS + UNIQUE constraint
+- `supabase/rls.sql` — políticas de escrita restrita (INSERT/UPDATE/DELETE com `false`) para `products`, `product_platform_config`, `price_history`, `subscribers`
+- `supabase/schema.sql` — UNIQUE `(product_id, platform)` na `product_platform_config` + índices em `confirmation_token`, `product_id`, `product_platform_config_id`
+
+### Código — Refatoração
+
+#### Utilitários compartilhados (elimina duplicação)
+- `scraper/utils.py` — `normalize()`, `token_similarity()`, `first_selector()`, `best_match()` extraídos e unificados
+- `amazon.py`, `amazon_global.py`, `magalu.py`, `shopee.py`, `enjoei.py` — importam de `utils.py` em vez de definições locais
+
+#### Plataformas centralizadas no frontend
+- `frontend/lib/platforms.ts` — `ALL_PLATFORMS`, `PLATFORM_LABELS`, `PLATFORM_ICONS`, `PLATFORM_BADGES` em local único
+- `platform-form.tsx`, `platform-manager.tsx`, `price-card.tsx`, `scrape-button.tsx`, `gerenciar/logs/page.tsx`, `gerenciar/page.tsx` — importam do arquivo central
+
+#### ErrorBoundary
+- `frontend/components/error-boundary.tsx` — novo componente classe para capturar erros de renderização
+
+### Corrigido
+
+#### Scraper Enjoei — URL de busca corrigida
+- URL alterada de `/search?q={}` para `/s?q={}` + extração via API GraphQL + fallback DOM + page.evaluate()
+
+#### Botão scrap quebrado pela whitelist de env
+- Subprocess Python perdeu `VIRTUAL_ENV`, `PYTHONPATH` — `ModuleNotFoundError: No module named 'dotenv'`
+- Revertido para `{...process.env, SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL}`
+
+#### AbortController no SSE reader
+- `scrape-button.tsx` — `abortRef` + cleanup no unmount + `signal.aborted` check no loop SSE
+
+#### Rate limiting no subscribe
+- `subscribe/route.ts` — mapa `recentSubscriptions` com cooldown de 1 minuto por email
+
+#### Error flood removido
+- `trigger/route.ts` — handler de erro do scraper não insere mais logs para TODAS configs ativas
+
+#### PlatformManager — reseta seleção em re-renders
+- `platform-manager.tsx` — `initialRef` compara referência antes de resetar `selected`
+
+#### Outros
+- `price-card.tsx` — array index como key substituído por chave estável
+- `gerenciar/page.tsx`, `produto/[id]/page.tsx` — erros do Supabase agora logados
+- `scrape-logs/route.ts` — `offset` limitado a 10000
+- `albums/add/route.ts` — validação de tipos string
+
+### Testes
+- `test_amazon.py` — imports atualizados de `scraper.amazon` → `scraper.utils`
+- `test_price_parser.py` — adicionado `None` → `0.0`
+- `test_utils.py` — novo arquivo com 16 testes (normalize, token_similarity, first_selector, best_match)
+- **73/73 testes passando** (unitários sem `time.sleep`)
+
 ## [0.9.13] — 2026-07-07
 
 ### Corrigido

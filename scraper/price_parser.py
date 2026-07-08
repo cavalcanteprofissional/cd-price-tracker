@@ -1,7 +1,9 @@
 import re
 
 
-def parse_br_price(text: str) -> float:
+def parse_br_price(text: str | None) -> float:
+    if text is None:
+        return 0.0
     text = text.strip()
     # Remove currency symbols (R$, £, €, $) e whitespace
     text = re.sub(r"[R$£€\s]", "", text)

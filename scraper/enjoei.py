@@ -5,6 +5,8 @@ import re
 import tempfile
 from urllib.parse import quote, urlparse
 
+from scraper.utils import normalize, token_similarity, best_match
+
 logger = logging.getLogger(__name__)
 
 ENJOEI_URL = "https://www.enjoei.com.br/s?q={}"
@@ -322,39 +324,7 @@ def _extract_title_from_href(href: str) -> str:
     return ""
 
 
-def _normalize(text: str) -> str:
-    text = text.lower().strip()
-    text = re.sub(r"[^a-z0-9\s]", "", text)
-    return text
 
-
-def _token_similarity(a: str, b: str) -> float:
-    a_tokens = set(_normalize(a).split())
-    b_tokens = set(_normalize(b).split())
-    if not a_tokens or not b_tokens:
-        return 0.0
-    intersection = a_tokens & b_tokens
-    return len(intersection) / max(len(a_tokens), len(b_tokens))
-
-
-def _best_match(candidates: list[dict], expected: str, artist: str) -> dict | None:
-    if not candidates:
-        return None
-    artist_tokens = set(_normalize(artist).split())
-
-    def score(c):
-        s = _token_similarity(expected, c["title"])
-        if s <= 0 and artist_tokens:
-            info_norm = _normalize(c.get("_info", ""))
-            if any(t in info_norm for t in artist_tokens):
-                s = 0.15
-        return s
-
-    best = max(candidates, key=score)
-    best_score = score(best)
-    logger.info("Enjoei: melhor match (score=%.2f) entre %d candidatos: '%s'",
-                best_score, len(candidates), best["title"])
-    return best if best_score >= 0.15 else None
 
 
 def search_enjoei(search_query: str, context) -> list[dict]:
@@ -428,7 +398,7 @@ def search_enjoei(search_query: str, context) -> list[dict]:
             return []
 
         expected = search_query.replace(" cd original", "").replace(" cd", "")
-        best = _best_match(candidates, expected, search_query)
+        best = best_match(candidates, expected, search_query)
         return [best] if best else []
 
     except Exception as e:

@@ -13,6 +13,7 @@ from scraper.price_parser import parse_br_price
     ("10.000,00", 10000.00),
     ("R$ 99", 99.0),
     ("0,99", 0.99),
+    (None, 0.0),
 ])
 def test_parse_br_price(text, expected):
     assert parse_br_price(text) == expected

@@ -10,11 +10,7 @@ export async function GET(request: Request) {
   const adminToken = request.headers.get("x-admin-token");
   const expectedToken = process.env.ADMIN_TOKEN?.trim();
   if (adminToken !== expectedToken) {
-    console.error("scrape-logs ADMIN_TOKEN mismatch:", {
-      received: adminToken,
-      expectedLength: expectedToken?.length,
-      receivedLength: adminToken?.length,
-    });
+    console.warn("scrape-logs ADMIN_TOKEN mismatch");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -24,7 +20,7 @@ export async function GET(request: Request) {
   const platform = searchParams.get("platform");
   const since = searchParams.get("since");
   const limit = Math.min(Number(searchParams.get("limit")) || 100, 200);
-  const offset = Number(searchParams.get("offset")) || 0;
+  const offset = Math.min(Number(searchParams.get("offset")) || 0, 10000);
 
   let query = supabase
     .from("scrape_log")

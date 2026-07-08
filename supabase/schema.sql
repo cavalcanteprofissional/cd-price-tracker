@@ -34,6 +34,14 @@ create table product_platform_config (
   created_at timestamptz default now()
 );
 
+-- UNIQUE (product_id, platform) previne duplicatas por TOCTOU
+-- Se já existirem duplicatas, rodar antes:
+--   delete from product_platform_config a
+--   using product_platform_config b
+--   where a.id < b.id and a.product_id = b.product_id and a.platform = b.platform;
+alter table product_platform_config
+add constraint product_platform_unique unique (product_id, platform);
+
 -- ----------------------------------------
 -- Tabela: price_history
 -- ----------------------------------------
@@ -76,6 +84,10 @@ create table subscribers (
 -- Índices
 -- ----------------------------------------
 create index idx_price_history_config_scraped on price_history(product_platform_config_id, scraped_at desc);
+create index idx_price_history_product on price_history(product_platform_config_id);
+create index idx_product_platform_config_product on product_platform_config(product_id);
 create index idx_subscribers_confirmed on subscribers(confirmed);
-create index idx_scrape_log_status on scrape_log(status);
+create index idx_subscribers_confirmation on subscribers(confirmation_token);
 create index idx_subscribers_unsubscribe on subscribers(unsubscribe_token);
+create index idx_scrape_log_status on scrape_log(status);
+create index idx_scrape_log_product on scrape_log(product_platform_config_id);

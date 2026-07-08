@@ -1,8 +1,9 @@
 import logging
 import random
-import re
 import time
 from urllib.parse import quote
+
+from scraper.utils import first_selector, normalize, token_similarity, best_match
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def _extract_from_page(page) -> list[dict]:
 
     for item in results[:20]:
         try:
-            title_el = _first_selector(item, [
+            title_el = first_selector(item, [
                 "[data-testid='product-title']",
                 "h2",
                 "a[class*='ProductCard']",
@@ -49,7 +50,7 @@ def _extract_from_page(page) -> list[dict]:
             if not title:
                 continue
 
-            price_el = _first_selector(item, [
+            price_el = first_selector(item, [
                 "[data-testid='price-value']",
                 "[class*='price']",
                 "[class*='Price']",
@@ -58,7 +59,7 @@ def _extract_from_page(page) -> list[dict]:
             ])
             price_text = price_el.text_content().strip() if price_el else None
 
-            link_el = _first_selector(item, [
+            link_el = first_selector(item, [
                 "a[data-testid='product-card']",
                 "a[href*='/produto/']",
                 "a[href*='/p/']",
@@ -68,7 +69,7 @@ def _extract_from_page(page) -> list[dict]:
             if href and not href.startswith("http"):
                 href = "https://www.magazineluiza.com.br" + href
 
-            seller_el = _first_selector(item, [
+            seller_el = first_selector(item, [
                 "[data-testid='seller-name']",
                 "[class*='seller']",
                 "[class*='Seller']",
@@ -88,46 +89,7 @@ def _extract_from_page(page) -> list[dict]:
     return all_items
 
 
-def _first_selector(parent, selectors: list[str]):
-    for sel in selectors:
-        el = parent.query_selector(sel)
-        if el:
-            return el
-    return None
 
-
-def _normalize(text: str) -> str:
-    text = text.lower().strip()
-    text = re.sub(r"[^a-z0-9\s]", "", text)
-    return text
-
-
-def _token_similarity(a: str, b: str) -> float:
-    a_tokens = set(_normalize(a).split())
-    b_tokens = set(_normalize(b).split())
-    if not a_tokens or not b_tokens:
-        return 0.0
-    intersection = a_tokens & b_tokens
-    return len(intersection) / max(len(a_tokens), len(b_tokens))
-
-
-def _best_match(candidates: list[dict], expected: str, artist: str) -> dict | None:
-    if not candidates:
-        return None
-    artist_tokens = set(_normalize(artist).split())
-
-    def score(c):
-        s = _token_similarity(expected, c["title"])
-        if s <= 0 and artist_tokens:
-            info_norm = _normalize(c.get("_info", ""))
-            if any(t in info_norm for t in artist_tokens):
-                s = 0.15
-        return s
-
-    best = max(candidates, key=score)
-    best_score = score(best)
-    logger.info("Magalu: melhor match (score=%.2f): '%s'", best_score, best["title"])
-    return best if best_score >= 0.15 else None
 
 
 def search_magalu(search_query: str, context) -> list[dict]:
@@ -156,7 +118,7 @@ def search_magalu(search_query: str, context) -> list[dict]:
             return []
 
         expected = search_query.replace(" cd original", "").replace(" cd", "")
-        best = _best_match(candidates, expected, search_query)
+        best = best_match(candidates, expected, search_query)
         return [best] if best else []
 
     except Exception as e:

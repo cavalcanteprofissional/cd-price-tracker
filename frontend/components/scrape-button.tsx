@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PLATFORM_ICONS } from "@/lib/platforms";
 
 interface LogEntry {
   id: string;
@@ -30,10 +31,7 @@ const STATUS_DISPLAY: Record<string, string> = {
   skipped_fanmade: "fanmade ignorado",
 };
 
-const PLATFORM_ICONS: Record<string, string> = {
-  amazon: "🇧🇷", amazon_us: "🇺🇸", amazon_uk: "🇬🇧", amazon_de: "🇩🇪",
-  mercado_livre: "🟡", magalu: "🟢", americanas: "🔵", casas_bahia: "🔴", shopee: "🛍️", enjoei: "💛",
-};
+
 
 const LOG_PREFIX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \[\w+\] [\w.]+: /;
 
@@ -51,6 +49,7 @@ export default function ScrapeButton() {
   const knownIds = useRef(new Set<string>());
   const lastUpdateAt = useRef<number>(Date.now());
   const isFirstRender = useRef(true);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Salva estado no sessionStorage (pula 1º ciclo para não sobrescrever restauração)
   useEffect(() => {
@@ -106,6 +105,13 @@ export default function ScrapeButton() {
       setErrorMessage(null);
     }
   }, [status, mode, idleSeconds]);
+
+  // Cleanup do AbortController ao desmontar
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   // Polling — busca logs estruturados do banco (tanto local streaming quanto GHA)
   useEffect(() => {
@@ -183,7 +189,11 @@ export default function ScrapeButton() {
         setLiveStatus(null);
         setLogs([]);
 
+        abortRef.current = new AbortController();
+        const signal = abortRef.current.signal;
+
         while (true) {
+          if (signal.aborted) { reader.cancel(); break; }
           const { done, value } = await reader.read();
           if (done) break;
 
