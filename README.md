@@ -22,13 +22,13 @@ flowchart TB
         KIWI["Kiwi Discos ✅"]
         REG["Regards ✅"]
         CDP["CD Point ✅"]
-        FON["Fonoteca 🆕"]
-        SUP["Supernova Discos 🆕"]
-        DIS["Discol 🆕"]
-        MHO["Music House 🆕"]
-        MIG["Migranet 🆕"]
-        UMS["Universal Music Store 🆕"]
-        LJD["A Loja de Discos 🆕"]
+        FON["Fonoteca ✅"]
+        SUP["Supernova Discos ✅"]
+        DIS["Discol ✅"]
+        MHO["Music House ✅"]
+        MIG["Migranet ✅"]
+        UMS["Universal Music Store ✅"]
+        LJD["A Loja de Discos ✅"]
     end
 
     subgraph LastFM["🎵 Last.fm API"]
@@ -148,16 +148,23 @@ Filtrar por artista: [Michael Jackson] [Pink Floyd] [Radiohead]
 | Amazon US | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.com`, moeda USD |
 | Amazon UK | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.co.uk`, moeda GBP, penalidade de álbum |
 | Amazon DE | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.de`, moeda EUR, penalidade de álbum |
-| Enjoei | `enjoei.py` | ⚠️ Instável | 3 URLs em cascata + API GraphQL + DOM + page.evaluate() |
 | Locomotiva Discos | `locomotiva.py` | ✅ Funcionando | httpx, Iluria (HTML limpo, sem browser) |
-| Kiwi Discos | `kiwi.py` | 🆕 | Playwright, Nuvemshop |
-| Regards | `regards.py` | 🆕 | Playwright, WooCommerce |
-| CD Point | `cdpoint.py` | 🆕 | Playwright, ASP.NET WebForms |
+| Kiwi Discos | `kiwi.py` | ✅ Funcionando | Playwright, Nuvemshop |
+| Regards | `regards.py` | ✅ Funcionando | Playwright, WooCommerce |
+| CD Point | `cdpoint.py` | ✅ Funcionando | Playwright, ASP.NET WebForms |
+| Fonoteca | `fonoteca.py` | ✅ Funcionando | httpx, Nuvemshop (JSON-LD) |
+| Supernova Discos | `supernova.py` | ✅ Funcionando | httpx, Nuvemshop (JSON-LD) |
+| Discol | `discol.py` | ✅ Funcionando | httpx, Nuvemshop (JSON-LD) |
+| Music House | `music_house.py` | ✅ Funcionando | httpx, Nuvemshop (JSON-LD) |
+| Migranet | `migranet.py` | ✅ Funcionando | httpx, Loja Integrada |
+| Universal Music Store | `umusicstore.py` | ✅ Funcionando | httpx, Vtex API de catálogo |
+| A Loja de Discos | `loja_discos.py` | ✅ Funcionando | httpx, custom + fallback por categoria |
+| Enjoei | `enjoei.py` | ⚠️ Instável | 3 URLs em cascata + API GraphQL + DOM + page.evaluate() |
 | Mercado Livre | `mercadolivre.py` | ❌ Bloqueado | CAPTCHA Akamai + API OAuth pendente + Firefox fallback |
 | Shopee | `shopee.py` | ❌ Bloqueado | Redireciona pra verificação de tráfego |
 | Mag. Luiza | `magalu.py` | ❌ Bloqueado | Akamai 403 na primeira requisição |
 
-**Resumo:** Amazon BR + Global funcionam 100%. Locomotiva Discos (httpx) também ✅. Enjoei em desenvolvimento com 3 estratégias de extração em cascata. Kiwi, Regards e CD Point implementados com Playwright, aguardando testes definitivos. As demais lojas brasileiras usam anti-bot pesado (Akamai, DataDome) que bloqueia até Playwright com stealth. Plano futuro: **API oficial Mercado Livre** (OAuth) e **Google Shopping API** como fontes alternativas.
+**18 lojas configuradas**, sendo **15 funcionais** (httpx/sem browser em 11 delas). Amazon BR/Global com Playwright, Locomotiva e Nuvemshops com httpx puro, Universal Music Store via API Vtex. Enjoei em desenvolvimento com 3 estratégias de extração em cascata. As lojas bloqueadas (ML, Shopee, Magalu) usam anti-bot pesado (Akamai, DataDome). Plano futuro: **API oficial Mercado Livre** (OAuth) e **Google Shopping API** como fontes alternativas.
 
 ## 📦 Stack
 
@@ -215,7 +222,9 @@ cd-price-tracker/
     │   │   ├── platform-manager.tsx   # Gerenciar lojas do CD
     │   │   ├── platform-form.tsx      # Formulário de adicionar (todas marcadas)
     │   │   ├── album-search.tsx       # Busca Last.fm
-    │   │   ├── admin-auth.tsx         # Login admin
+    │   │   ├── admin-auth.tsx         # Login admin (com olho p/ senha)
+    │   │   ├── confirm-modal.tsx      # Modal de confirmação reutilizável
+    │   │   ├── toast.tsx              # Notificação auto-dismiss
     │   │   ├── error-boundary.tsx     # ErrorBoundary classe
     │   │   ├── price-card.tsx         # Card de preço
     │   │   └── price-chart.tsx        # Gráfico recharts
@@ -228,34 +237,48 @@ cd-price-tracker/
 
 ## 📊 Dashboard
 
-Na home você vê o grid completo dos CDs com o último preço de cada loja:
+A home exibe todos os CDs em um grid responsivo. Cada card mostra a capa, o artista e os preços em todas as lojas monitoradas.
 
 ```
-┌──────────────────────────────────────────┐
-│  💿  Thriller                            │
-│      Michael Jackson                     │
-│                                          │
-│  🇧🇷 Amazon BR    R$ 44,90  🛒           │
-  │  🇺🇸 Amazon US    $ 12,95   🛒           │
-  │  🇬🇧 Amazon UK    £ 11,20   🛒           │
-  │  🇩🇪 Amazon DE    € 13,40   🛒           │
-  │  🟡 Mercado Livre  —  sem preço          │
-  │  🛍️ Shopee        R$ 39,90  🛒          │
-  │  💛 Enjoei        R$ 52,00  🛒          │
-  │  🎶 Fonoteca      R$ 44,90  🛒          │
-  │  🎤 Universal     R$ 59,90  🛒          │
-  │  🌐 Migranet      R$ 49,90  🛒          │
-└──────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│  💿  Thriller — Michael Jackson                  │
+│                                                  │
+│  🇧🇷 Amazon BR     R$ 44,90    🛒   📈            │
+│  🇺🇸 Amazon US     $ 12,95     🛒   📈            │
+│  🇬🇧 Amazon UK     £ 11,20     🛒   📈            │
+│  🇩🇪 Amazon DE     € 13,40     🛒   📈            │
+│  🎶 Fonoteca      R$ 44,90    🛒   📈            │
+│  🎤 Universal     R$ 59,90    🛒   📈            │
+│  🌐 Migranet      R$ 49,90    🛒   📈            │
+│  💥 Supernova     R$ 69,90    🛒   📈            │
+│  🎯 Discol        R$ 54,90    🛒   📈            │
+│  🎼 Music House   R$ 49,90    🛒   📈            │
+│  🏪 A Loja Discos R$ 39,90    🛒   📈            │
+│  🚂 Locomotiva    R$ 44,90    🛒   📈            │
+│  🥝 Kiwi          R$ 42,00    🛒   📈            │
+│  🎵 Regards       R$ 47,90    🛒   📈            │
+│  💿 CD Point      R$ 89,90    🛒   📈            │
+│  🟡 Mercado Livre    —   sem preço                │
+│  🛍️ Shopee        R$ 39,90    🛒   📈            │
+│  💛 Enjoei        R$ 52,00    🛒   📈            │
+└──────────────────────────────────────────────────┘
 ```
 
-**Clique no preço** → abre o anúncio direto na loja.  
-**Clique no card** → abre página de detalhe com gráfico do histórico + gerenciamento de plataformas.
+**🛒 Clique no preço** → abre o anúncio direto na loja.  
+**📈 Clique no gráfico** → abre página de detalhe com o histórico completo de preços e o gerenciamento de plataformas.  
+**🔄 Clique em "▶ Rodar" na navbar** → executa o scraper em tempo real com logs ao vivo via SSE, sem esperar o cron diário.
 
-Na navbar, o botão **▶ Rodar** executa o scraper na hora com logs ao vivo via SSE — sem precisar esperar o cron diário.
+### Funcionalidades do dashboard
+
+- **Ordenação automática** — CDs mais recentes ou por nome
+- **Badges das lojas** — cada loja tem um badge de 2 letras (BR, ML, FN, SN, etc.) para fácil identificação
+- **Preço mais baixo destacado** — a loja com o menor preço aparece em primeiro lugar no card
+- **Status visual** — moedas diferentes (R$, $, £, €) conforme a origem do produto
+- **Indisponível identificado** — lojas sem preço mostram "— sem preço" em vez de ocultar o registro
 
 ## 🧪 Testes
 
-**51 testes unitários**. Zero chamadas externas. Tudo mockado com pytest-mock.
+**116 testes**. Zero chamadas externas. Tudo mockado com pytest-mock.
 
 | Arquivo | O que testa |
 |---|---|
@@ -273,7 +296,7 @@ Na navbar, o botão **▶ Rodar** executa o scraper na hora com logs ao vivo via
 
 ## 🔭 O que vem por aí
 
-18 lojas implementadas: Amazon (BR/US/UK/DE), Locomotiva, Kiwi, Regards, CD Point, Fonoteca, Supernova, Discol, Music House, Migranet, Universal Music Store, A Loja de Discos. O foco agora é destravar as lojas bloqueadas:
+**18 lojas implementadas**, 15 funcionais. O foco agora é destravar as lojas bloqueadas:
 
 1. **API oficial do Mercado Livre** — app registrado, aguardando aprovação (OAuth). Se funcionar, resolve ML sem browser.
 2. **Google Shopping API** — fonte agregada que cobre várias lojas numa chamada só.
@@ -284,4 +307,4 @@ Veja o [TODO.md](TODO.md) completo.
 
 ## 📄 Licença
 
-MIT — usa, modifica, compartilha.
+MIT © [Lucas Cavalcante dos Santos](LICENSE) — usa, modifica, compartilha.
