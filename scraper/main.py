@@ -34,6 +34,7 @@ from scraper.magalu import search_magalu
 from scraper.mercadolivre import scrape_mercadolivre, try_mercadolivre_api
 from scraper.models import ScrapeResult, ScrapedProduct
 from scraper.price_parser import parse_br_price
+from scraper.utils import best_match
 from scraper.shopee import scrape_shopee
 from scraper.supabase_client import supabase
 
@@ -45,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 
 def auto_search_query(title: str, artist: str) -> str:
-    return f"{title} {artist} cd original"
+    return f"{title} {artist}"
 
 
 def persist_result(result: ScrapeResult):
@@ -110,6 +111,9 @@ def _process_platform_scrape(
         artist = config["products"]["artist"]
         search_query = auto_search_query(title, artist)
         logger.info("%s: search_query auto-gerado: '%s'", platform, search_query)
+    else:
+        title = config["products"]["title"]
+        artist = config["products"]["artist"]
 
     results = scrape_fn(search_query, context)
     if not results:
@@ -130,7 +134,13 @@ def _process_platform_scrape(
     if not valid:
         return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "tudo filtrado como fanmade")
 
-    best = choose_lowest_price(valid)
+    best = best_match(valid, title, artist)
+    if best:
+        logger.info("%s: best_match score >= 0.15 — '%s'", platform, best["title"])
+    else:
+        logger.warning("%s: nenhum match por título, fallback para mais barato entre %d candidatos", platform, len(valid))
+        best = choose_lowest_price(valid)
+
     product = ScrapedProduct(
         title=best["title"],
         price=Decimal(str(parse_br_price(best["price_text"]))),
@@ -226,7 +236,7 @@ def process_mercadolivre(config: dict, context) -> ScrapeResult:
                 valid.append(item)
 
         if valid:
-            best = choose_lowest_price(valid)
+            best = best_match(valid, title, artist) or choose_lowest_price(valid)
             product = ScrapedProduct(
                 title=best["title"],
                 price=Decimal(str(parse_br_price(best["price_text"]))),

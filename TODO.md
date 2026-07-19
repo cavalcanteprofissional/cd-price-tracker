@@ -217,7 +217,7 @@
 | 7 | **Índice `confirmation_token`** — incorporado em `schema.sql` | ✅ |
 | 8 | **Lojas não implementadas** — americanas, casas_bahia, submarino, carrefour, extra: remover do CHECK constraint ou implementar | ⏳ |
 
-## Fase 15 — Curadoria de 7 Lojas (v0.13.0)
+## Fase 15 — Curadoria de 7 Lojas (v0.13.0) + Hotfix (v0.13.1)
 
 | # | Item | Status |
 |---|------|--------|
@@ -230,6 +230,7 @@
 | 7 | **schema.sql** — CHECK constraint + migration executada | ✅ |
 | 8 | **CHANGELOG.md + README.md** — docs atualizadas | ✅ |
 | 9 | Build (0 erros) | ✅ |
+| 10 | 🔴 **Hotfix matching** — `best_match` no lugar de `choose_lowest_price`, detecção de fallback Nuvemshop, `auto_search_query` sem "cd original" | ✅ |
 
 ## Fase 14 — UI/UX Login (v0.12.1)
 

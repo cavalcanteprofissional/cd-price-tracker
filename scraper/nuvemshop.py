@@ -6,6 +6,8 @@ from urllib.parse import quote
 import httpx
 from bs4 import BeautifulSoup
 
+from scraper.utils import normalize
+
 logger = logging.getLogger(__name__)
 
 HEADERS = {
@@ -45,8 +47,13 @@ def search_nuvemshop(base_url: str, name: str, search_query: str, _context=None)
             pass
 
     if items:
-        logger.info("%s: %d candidatos extraidos", name, len(items))
-        for item in items[:3]:
+        query_tokens = set(normalize(search_query).split())
+        matching = [i for i in items if query_tokens & set(normalize(i["title"]).split())]
+        if not matching:
+            logger.warning("%s: busca retornou %d produtos mas nenhum contem termos da query '%s' — provavel fallback do catalogo", name, len(items), search_query)
+            return []
+        logger.info("%s: %d candidatos extraidos (%d com match na query)", name, len(items), len(matching))
+        for item in matching[:3]:
             logger.info("  exemplo: '%s' | preco='%s'", item["title"], item["price_text"])
     else:
         logger.warning("%s: nenhum candidato encontrado", name)

@@ -6,10 +6,10 @@ from scraper.models import ScrapeResult, ScrapedProduct
 
 class TestAutoSearchQuery:
     def test_basic(self):
-        assert auto_search_query("Thriller", "Michael Jackson") == "Thriller Michael Jackson cd original"
+        assert auto_search_query("Thriller", "Michael Jackson") == "Thriller Michael Jackson"
 
     def test_special_chars(self):
-        assert auto_search_query("The Dark Side of the Moon", "Pink Floyd") == "The Dark Side of the Moon Pink Floyd cd original"
+        assert auto_search_query("The Dark Side of the Moon", "Pink Floyd") == "The Dark Side of the Moon Pink Floyd"
 
 
 class TestChooseLowestPrice:

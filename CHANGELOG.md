@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.13.1] — 2026-07-18
+
+### Corrigido
+
+#### Matching de CDs nas lojas — causa raiz dos falsos positivos
+- **`scraper/main.py:133`** — `_process_platform_scrape` agora usa `best_match(valid, title, artist)` em vez de `choose_lowest_price(valid)`. Antes pegava o item mais barato entre TODOS os resultados, sem verificar se o título correspondia ao CD procurado.
+- **`scraper/nuvemshop.py:57`** — Detecção de fallback do catálogo Nuvemshop. Quando a busca não encontra resultados, a Nuvemshop retorna o catálogo padrão — agora detectamos isso e retornamos `[]` (not_found) em vez de produtos aleatórios.
+- **`scraper/main.py:47`** — `auto_search_query` sem sufixo "cd original", que poluía a busca em lojas especializadas.
+- **`scraper/main.py:229`** — Mesma correção do `best_match` no caminho da API do Mercado Livre.
+
 ## [0.13.0] — 2026-07-18
 
 ### Adicionado
