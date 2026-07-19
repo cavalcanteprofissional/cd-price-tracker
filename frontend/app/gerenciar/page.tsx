@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AdminAuth from "@/components/admin-auth";
 import PlatformManager from "@/components/platform-manager";
+import ConfirmModal from "@/components/confirm-modal";
+import Toast from "@/components/toast";
 import { PLATFORM_BADGES } from "@/lib/platforms";
 
 interface Product {
@@ -20,7 +22,14 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [platformTarget, setPlatformTarget] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  function handleLogout() {
+    sessionStorage.removeItem("admin_token");
+    setToken(null);
+  }
 
   useEffect(() => {
     const stored = sessionStorage.getItem("admin_token");
@@ -48,18 +57,23 @@ export default function AdminPage() {
 
   async function handleDelete(id: string) {
     if (!token) return;
-    if (!confirm("Tem certeza que deseja remover este CD? O histórico de preços também será removido.")) return;
+    setDeleteTarget(id);
+  }
 
-    setDeleting(id);
+  async function handleConfirmDelete() {
+    if (!token || !deleteTarget) return;
+    setDeleting(deleteTarget);
+    setDeleteTarget(null);
     try {
-      const res = await fetch(`/api/albums/${id}`, {
+      const res = await fetch(`/api/albums/${deleteTarget}`, {
         method: "DELETE",
         headers: { "x-admin-token": token },
       });
       if (!res.ok) throw new Error("Falha ao deletar");
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-    } catch (err) {
-      alert("Erro ao remover CD.");
+      setProducts((prev) => prev.filter((p) => p.id !== deleteTarget));
+      setToast({ message: "CD removido com sucesso.", type: "success" });
+    } catch {
+      setToast({ message: "Erro ao remover CD.", type: "error" });
     } finally {
       setDeleting(null);
     }
@@ -114,6 +128,23 @@ export default function AdminPage() {
         >
           Logs de Scraping
         </Link>
+        <div style={{ flex: 1 }} />
+        <button
+          type="button"
+          onClick={handleLogout}
+          style={{
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 600,
+            color: "#ef4444",
+            background: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: 6,
+            cursor: "pointer",
+          }}
+        >
+          Sair
+        </button>
       </div>
 
       {loading ? (
@@ -219,6 +250,26 @@ export default function AdminPage() {
             </div>
           ))}
         </div>
+      )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Remover CD"
+        message="Tem certeza que deseja remover este CD? O histórico de preços também será removido."
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        danger
+        loading={!!deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
 
       {platformTarget && platformProduct && (

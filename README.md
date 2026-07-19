@@ -1,4 +1,4 @@
-# 💿 CD Price Tracker <sup><sub>v0.9.14</sub></sup>
+# 💿 CD Price Tracker <sup><sub>v0.13.0</sub></sup>
 
 Acompanhe os preços dos seus CDs favoritos em várias lojas brasileiras. Scraping automático todo dia, histórico em gráfico, e um painel pra você gerenciar sua coleção.
 
@@ -18,6 +18,17 @@ flowchart TB
         SHOP["Shopee ❌"]
         MGL["Magazine Luiza ❌"]
         ENJ["Enjoei ⚠️"]
+        LOCO["Locomotiva Discos ✅"]
+        KIWI["Kiwi Discos ✅"]
+        REG["Regards ✅"]
+        CDP["CD Point ✅"]
+        FON["Fonoteca 🆕"]
+        SUP["Supernova Discos 🆕"]
+        DIS["Discol 🆕"]
+        MHO["Music House 🆕"]
+        MIG["Migranet 🆕"]
+        UMS["Universal Music Store 🆕"]
+        LJD["A Loja de Discos 🆕"]
     end
 
     subgraph LastFM["🎵 Last.fm API"]
@@ -50,6 +61,17 @@ flowchart TB
     CRON --> Scrapers
     TRIGGER --> Scrapers
     Scrapers --> Supabase
+    LOCO --> Supabase
+    KIWI --> Supabase
+    REG --> Supabase
+    CDP --> Supabase
+    FON --> Supabase
+    SUP --> Supabase
+    DIS --> Supabase
+    MHO --> Supabase
+    MIG --> Supabase
+    UMS --> Supabase
+    LJD --> Supabase
     LastFM --> Frontend
     Supabase --> Frontend
     Frontend --> Email
@@ -126,12 +148,16 @@ Filtrar por artista: [Michael Jackson] [Pink Floyd] [Radiohead]
 | Amazon US | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.com`, moeda USD |
 | Amazon UK | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.co.uk`, moeda GBP, penalidade de álbum |
 | Amazon DE | `amazon_global.py` | ✅ Funcionando | Playwright, domínio `.de`, moeda EUR, penalidade de álbum |
-| Enjoei | `enjoei.py` | ⚠️ Instável | API GraphQL + Playwright DOM + page.evaluate() — 3 estratégias em cascata |
-| Mercado Livre | `mercadolivre.py` | ❌ Bloqueado | CAPTCHA Akamai + API OAuth pendente |
+| Enjoei | `enjoei.py` | ⚠️ Instável | 3 URLs em cascata + API GraphQL + DOM + page.evaluate() |
+| Locomotiva Discos | `locomotiva.py` | ✅ Funcionando | httpx, Iluria (HTML limpo, sem browser) |
+| Kiwi Discos | `kiwi.py` | 🆕 | Playwright, Nuvemshop |
+| Regards | `regards.py` | 🆕 | Playwright, WooCommerce |
+| CD Point | `cdpoint.py` | 🆕 | Playwright, ASP.NET WebForms |
+| Mercado Livre | `mercadolivre.py` | ❌ Bloqueado | CAPTCHA Akamai + API OAuth pendente + Firefox fallback |
 | Shopee | `shopee.py` | ❌ Bloqueado | Redireciona pra verificação de tráfego |
 | Mag. Luiza | `magalu.py` | ❌ Bloqueado | Akamai 403 na primeira requisição |
 
-**Resumo:** Amazon BR + Global funcionam 100%. Enjoei em desenvolvimento com 3 estratégias de extração em cascata (API → DOM → evaluate). As demais lojas brasileiras usam anti-bot pesado (Akamai, DataDome) que bloqueia até Playwright com stealth. Plano futuro: **API oficial Mercado Livre** (OAuth) e **Google Shopping API** como fontes alternativas.
+**Resumo:** Amazon BR + Global funcionam 100%. Locomotiva Discos (httpx) também ✅. Enjoei em desenvolvimento com 3 estratégias de extração em cascata. Kiwi, Regards e CD Point implementados com Playwright, aguardando testes definitivos. As demais lojas brasileiras usam anti-bot pesado (Akamai, DataDome) que bloqueia até Playwright com stealth. Plano futuro: **API oficial Mercado Livre** (OAuth) e **Google Shopping API** como fontes alternativas.
 
 ## 📦 Stack
 
@@ -142,7 +168,7 @@ Filtrar por artista: [Michael Jackson] [Pink Floyd] [Radiohead]
 | Banco de dados | Supabase (free tier — Postgres + RLS + API) |
 | Validação de álbuns | Last.fm API |
 | Frontend | Next.js 14 (App Router) + Recharts |
-| Testes | Pytest (73 unit + 25 mock = 99 testes) |
+| Testes | Pytest (51 unit + mock, zero chamadas externas) |
 | Notificações | Resend (futuro) |
 
 ## 📁 Estrutura do projeto
@@ -158,6 +184,18 @@ cd-price-tracker/
 │   ├── shopee.py          # Shopee ❌ bloqueado
 │   ├── magalu.py          # Magalu ❌ bloqueado
 │   ├── enjoei.py          # Enjoei ⚠️ instável (API + DOM + evaluate)
+│   ├── locomotiva.py      # Locomotiva Discos ✅ (httpx, Iluria)
+│   ├── kiwi.py            # Kiwi Discos ✅ (Playwright, Nuvemshop)
+│   ├── regards.py         # Regards ✅ (Playwright, WooCommerce)
+│   ├── cdpoint.py         # CD Point ✅ (Playwright, ASP.NET)
+│   ├── fonoteca.py        # Fonoteca 🆕 (httpx, Nuvemshop)
+│   ├── supernova.py       # Supernova Discos 🆕 (httpx, Nuvemshop)
+│   ├── discol.py          # Discol 🆕 (httpx, Nuvemshop)
+│   ├── music_house.py     # Music House 🆕 (httpx, Nuvemshop)
+│   ├── migranet.py        # Migranet 🆕 (httpx, Loja Integrada)
+│   ├── umusicstore.py     # Universal Music Store 🆕 (httpx, Vtex API)
+│   ├── loja_discos.py     # A Loja de Discos 🆕 (httpx, custom)
+│   ├── nuvemshop.py       # Base scraper Nuvemshop (httpx + JSON-LD)
 │   ├── filter.py          # Filtro anti-fanmade
 │   ├── utils.py           # normalize, token_similarity, first_selector, best_match
 │   ├── price_parser.py    # "R$ 49,90" → 49.90
@@ -198,12 +236,15 @@ Na home você vê o grid completo dos CDs com o último preço de cada loja:
 │      Michael Jackson                     │
 │                                          │
 │  🇧🇷 Amazon BR    R$ 44,90  🛒           │
-│  🇺🇸 Amazon US    $ 12,95   🛒           │
-│  🇬🇧 Amazon UK    £ 11,20   🛒           │
-│  🇩🇪 Amazon DE    € 13,40   🛒           │
-│  🟡 Mercado Livre  —  sem preço          │
-│  🛍️ Shopee        R$ 39,90  🛒          │
-│  💛 Enjoei        R$ 52,00  🛒          │
+  │  🇺🇸 Amazon US    $ 12,95   🛒           │
+  │  🇬🇧 Amazon UK    £ 11,20   🛒           │
+  │  🇩🇪 Amazon DE    € 13,40   🛒           │
+  │  🟡 Mercado Livre  —  sem preço          │
+  │  🛍️ Shopee        R$ 39,90  🛒          │
+  │  💛 Enjoei        R$ 52,00  🛒          │
+  │  🎶 Fonoteca      R$ 44,90  🛒          │
+  │  🎤 Universal     R$ 59,90  🛒          │
+  │  🌐 Migranet      R$ 49,90  🛒          │
 └──────────────────────────────────────────┘
 ```
 
@@ -214,7 +255,7 @@ Na navbar, o botão **▶ Rodar** executa o scraper na hora com logs ao vivo via
 
 ## 🧪 Testes
 
-**73 testes unitários** + 25 testes com Playwright mockado (99 total). Zero chamadas externas. Tudo mockado com pytest-mock.
+**51 testes unitários**. Zero chamadas externas. Tudo mockado com pytest-mock.
 
 | Arquivo | O que testa |
 |---|---|
@@ -232,7 +273,7 @@ Na navbar, o botão **▶ Rodar** executa o scraper na hora com logs ao vivo via
 
 ## 🔭 O que vem por aí
 
-A Amazon funciona 100% (BR + US + UK + DE). O foco agora é destravar as lojas bloqueadas:
+18 lojas implementadas: Amazon (BR/US/UK/DE), Locomotiva, Kiwi, Regards, CD Point, Fonoteca, Supernova, Discol, Music House, Migranet, Universal Music Store, A Loja de Discos. O foco agora é destravar as lojas bloqueadas:
 
 1. **API oficial do Mercado Livre** — app registrado, aguardando aprovação (OAuth). Se funcionar, resolve ML sem browser.
 2. **Google Shopping API** — fonte agregada que cobre várias lojas numa chamada só.

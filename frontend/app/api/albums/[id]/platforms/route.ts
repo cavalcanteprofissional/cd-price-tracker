@@ -25,46 +25,16 @@ export async function PATCH(
 
   console.log("PATCH /api/albums/%s/platforms — syncing platforms=%j", params.id, platforms);
 
-  const { data: existing } = await supabase
-    .from("product_platform_config")
-    .select("id, platform")
-    .eq("product_id", params.id);
+  const { error } = await supabase.rpc("sync_product_platforms", {
+    p_product_id: params.id,
+    p_platforms: platforms,
+  });
 
-  const existingPlatforms = new Set((existing ?? []).map((c: any) => c.platform));
-  const newPlatforms = new Set(platforms);
-
-  const toDelete = (existing ?? []).filter((c: any) => !newPlatforms.has(c.platform));
-  const toInsert = platforms.filter((p: string) => !existingPlatforms.has(p));
-
-  if (toDelete.length > 0) {
-    const ids = toDelete.map((c: any) => c.id);
-    const { error } = await supabase
-      .from("product_platform_config")
-      .delete()
-      .in("id", ids);
-    if (error) {
-      console.error("PATCH platforms — delete error:", error);
-      return NextResponse.json({ error: "Failed to remove platforms" }, { status: 500 });
-    }
-    console.log("PATCH platforms — removed %d configs", ids.length);
+  if (error) {
+    console.error("PATCH platforms — sync error:", error);
+    return NextResponse.json({ error: "Failed to sync platforms" }, { status: 500 });
   }
 
-  if (toInsert.length > 0) {
-    const inserts = toInsert.map((platform: string) => ({
-      product_id: params.id,
-      platform,
-      amazon_url: null,
-      search_query: null,
-    }));
-    const { error } = await supabase
-      .from("product_platform_config")
-      .insert(inserts);
-    if (error) {
-      console.error("PATCH platforms — insert error:", error);
-      return NextResponse.json({ error: "Failed to add platforms" }, { status: 500 });
-    }
-    console.log("PATCH platforms — added %d configs", inserts.length);
-  }
-
+  console.log("PATCH /api/albums/%s/platforms — synced %d platforms", params.id, platforms.length);
   return NextResponse.json({ success: true });
 }

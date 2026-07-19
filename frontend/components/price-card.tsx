@@ -6,6 +6,7 @@ import { PLATFORM_LABELS, PLATFORM_ICONS } from "@/lib/platforms";
 interface PriceItem {
   platform: string;
   price: number;
+  currency: string;
   seller_name: string | null;
   listing_url: string;
 }
@@ -85,7 +86,7 @@ export default function PriceCard({ id, title, artist, coverUrl, prices }: Price
                 color: "inherit",
               }}
             >
-              {PLATFORM_LABELS[p.platform] ?? p.platform}: <strong>R$ {Number(p.price).toFixed(2)}</strong>
+              {PLATFORM_LABELS[p.platform] ?? p.platform}: <strong>{p.currency === "USD" ? "$" : p.currency === "GBP" ? "£" : p.currency === "EUR" ? "€" : "R$"} {Number(p.price).toFixed(2)}</strong>
             </a>
           ))}
         </div>

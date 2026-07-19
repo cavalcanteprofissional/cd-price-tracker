@@ -13,12 +13,22 @@ load_dotenv(Path(__file__).parent / ".env.local")
 
 from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 from scraper.alert import send_alert
 from scraper.amazon import scrape_amazon, search_amazon
 from scraper.amazon_global import search_amazon_marketplace, MARKETPLACES
 from scraper.enjoei import search_enjoei
+from scraper.locomotiva import search_locomotiva
+from scraper.kiwi import search_kiwi
+from scraper.regards import search_regards
+from scraper.cdpoint import search_cdpoint
+from scraper.fonoteca import search_fonoteca
+from scraper.supernova import search_supernova
+from scraper.discol import search_discol
+from scraper.music_house import search_music_house
+from scraper.migranet import search_migranet
+from scraper.umusicstore import search_umusicstore
+from scraper.loja_discos import search_loja_discos
 from scraper.filter import is_suspected_fanmade
 from scraper.magalu import search_magalu
 from scraper.mercadolivre import scrape_mercadolivre, try_mercadolivre_api
@@ -92,6 +102,7 @@ def _process_platform_scrape(
     platform: str,
     config: dict,
     scrape_fn,
+    context,
     search_query: str | None = None,
 ) -> ScrapeResult:
     if not search_query:
@@ -100,124 +111,96 @@ def _process_platform_scrape(
         search_query = auto_search_query(title, artist)
         logger.info("%s: search_query auto-gerado: '%s'", platform, search_query)
 
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(
-            headless=True,
-            args=["--disable-blink-features=AutomationControlled"],
-        )
-        context = _make_stealth_context(browser)
-        try:
-            results = scrape_fn(search_query, context)
-            if not results:
-                return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "sem resultados")
+    results = scrape_fn(search_query, context)
+    if not results:
+        return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "sem resultados")
 
-            valid = []
-            for item in results:
-                if is_suspected_fanmade(item["title"]):
-                    supabase.table("scrape_log").insert({
-                        "product_platform_config_id": config["id"],
-                        "status": "skipped_fanmade",
-                        "raw_title": item["title"],
-                        "detail": None,
-                    }).execute()
-                else:
-                    valid.append(item)
+    valid = []
+    for item in results:
+        if is_suspected_fanmade(item["title"]):
+            supabase.table("scrape_log").insert({
+                "product_platform_config_id": config["id"],
+                "status": "skipped_fanmade",
+                "raw_title": item["title"],
+                "detail": None,
+            }).execute()
+        else:
+            valid.append(item)
 
-            if not valid:
-                return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "tudo filtrado como fanmade")
+    if not valid:
+        return ScrapeResult(config["id"], config["product_id"], "not_found", None, None, "tudo filtrado como fanmade")
 
-            best = choose_lowest_price(valid)
-            product = ScrapedProduct(
-                title=best["title"],
-                price=Decimal(str(parse_br_price(best["price_text"]))),
-                currency="BRL",
-                availability="in_stock",
-                seller_name=best.get("seller_name"),
-                listing_url=best["listing_url"],
-                platform=platform,
-            )
-            return ScrapeResult(config["id"], config["product_id"], "success", product, best["title"], None)
-        finally:
-            browser.close()
+    best = choose_lowest_price(valid)
+    product = ScrapedProduct(
+        title=best["title"],
+        price=Decimal(str(parse_br_price(best["price_text"]))),
+        currency="BRL",
+        availability="in_stock",
+        seller_name=best.get("seller_name"),
+        listing_url=best["listing_url"],
+        platform=platform,
+    )
+    return ScrapeResult(config["id"], config["product_id"], "success", product, best["title"], None)
 
 
-def process_amazon(config: dict) -> ScrapeResult:
+def process_amazon(config: dict, context) -> ScrapeResult:
     amazon_url = config.get("amazon_url")
     title = config["products"]["title"]
     artist = config["products"]["artist"]
 
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(
-            headless=True,
-            args=["--disable-blink-features=AutomationControlled"],
-        )
-        context = _make_stealth_context(browser)
-        try:
-            if amazon_url:
-                data = scrape_amazon(amazon_url, context)
-            else:
-                logger.info("Amazon: amazon_url vazio, buscando '%s - %s'", artist, title)
-                data = search_amazon(title, artist, context)
+    if amazon_url:
+        data = scrape_amazon(amazon_url, context)
+    else:
+        logger.info("Amazon: amazon_url vazio, buscando '%s - %s'", artist, title)
+        data = search_amazon(title, artist, context)
 
-            if not data:
-                return ScrapeResult(config["id"], config["product_id"], "error", None, None, "falha ao extrair dados")
+    if not data:
+        return ScrapeResult(config["id"], config["product_id"], "error", None, None, "falha ao extrair dados")
 
-            if is_suspected_fanmade(data["title"]):
-                return ScrapeResult(config["id"], config["product_id"], "skipped_fanmade", None, data["title"], None)
+    if is_suspected_fanmade(data["title"]):
+        return ScrapeResult(config["id"], config["product_id"], "skipped_fanmade", None, data["title"], None)
 
-            product = ScrapedProduct(
-                title=data["title"],
-                price=Decimal(str(parse_br_price(data["price_text"]))),
-                currency="BRL",
-                availability=data["availability"],
-                seller_name=data["seller_name"],
-                listing_url=data["listing_url"],
-                platform="amazon",
-            )
-            return ScrapeResult(config["id"], config["product_id"], "success", product, data["title"], None)
-        finally:
-            browser.close()
+    product = ScrapedProduct(
+        title=data["title"],
+        price=Decimal(str(parse_br_price(data["price_text"]))),
+        currency="BRL",
+        availability=data["availability"],
+        seller_name=data["seller_name"],
+        listing_url=data["listing_url"],
+        platform="amazon",
+    )
+    return ScrapeResult(config["id"], config["product_id"], "success", product, data["title"], None)
 
 
-def process_amazon_global(platform: str, config: dict) -> ScrapeResult:
+def process_amazon_global(platform: str, config: dict, context) -> ScrapeResult:
     title = config["products"]["title"]
     artist = config["products"]["artist"]
-    cfg = MARKETPLACES.get(platform)
 
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(
-            headless=True,
-            args=["--disable-blink-features=AutomationControlled"],
-        )
-        context = _make_stealth_context(browser)
-        try:
-            logger.info("%s: buscando '%s - %s'", platform, artist, title)
-            data = search_amazon_marketplace(title, artist, context, platform)
+    logger.info("%s: buscando '%s - %s'", platform, artist, title)
+    data = search_amazon_marketplace(title, artist, context, platform)
 
-            if not data:
-                return ScrapeResult(config["id"], config["product_id"], "error", None, None, "falha ao extrair dados")
+    if not data:
+        return ScrapeResult(config["id"], config["product_id"], "error", None, None, "falha ao extrair dados")
 
-            if is_suspected_fanmade(data["title"]):
-                return ScrapeResult(config["id"], config["product_id"], "skipped_fanmade", None, data["title"], None)
+    if is_suspected_fanmade(data["title"]):
+        return ScrapeResult(config["id"], config["product_id"], "skipped_fanmade", None, data["title"], None)
 
-            price_text = data["price_text"]
-            currency = data.get("currency", "USD")
+    price_text = data["price_text"]
+    currency = data.get("currency", "USD")
 
-            product = ScrapedProduct(
-                title=data["title"],
-                price=Decimal(str(parse_br_price(price_text))),
-                currency=currency,
-                availability=data["availability"],
-                seller_name=data["seller_name"],
-                listing_url=data["listing_url"],
-                platform=platform,
-            )
-            return ScrapeResult(config["id"], config["product_id"], "success", product, data["title"], None)
-        finally:
-            browser.close()
+    product = ScrapedProduct(
+        title=data["title"],
+        price=Decimal(str(parse_br_price(price_text))),
+        currency=currency,
+        availability=data["availability"],
+        seller_name=data["seller_name"],
+        listing_url=data["listing_url"],
+        platform=platform,
+    )
+    return ScrapeResult(config["id"], config["product_id"], "success", product, data["title"], None)
 
 
-def process_mercadolivre(config: dict) -> ScrapeResult:
+def process_mercadolivre(config: dict, context) -> ScrapeResult:
     search_query = config.get("search_query")
     title = config["products"]["title"]
     artist = config["products"]["artist"]
@@ -259,22 +242,77 @@ def process_mercadolivre(config: dict) -> ScrapeResult:
             return ScrapeResult(config_id, product_id, "not_found", None, None, "tudo filtrado como fanmade")
 
     # 2. Fallback: Playwright (com browser)
-    return _process_platform_scrape("mercado_livre", config, scrape_mercadolivre, search_query)
+    return _process_platform_scrape("mercado_livre", config, scrape_mercadolivre, context, search_query)
 
 
-def process_magalu(config: dict) -> ScrapeResult:
+def process_magalu(config: dict, context) -> ScrapeResult:
     search_query = config.get("search_query")
-    return _process_platform_scrape("magalu", config, search_magalu, search_query)
+    return _process_platform_scrape("magalu", config, search_magalu, context, search_query)
 
 
-def process_shopee(config: dict) -> ScrapeResult:
+def process_shopee(config: dict, context) -> ScrapeResult:
     search_query = config.get("search_query")
-    return _process_platform_scrape("shopee", config, scrape_shopee, search_query)
+    return _process_platform_scrape("shopee", config, scrape_shopee, context, search_query)
 
 
-def process_enjoei(config: dict) -> ScrapeResult:
+def process_enjoei(config: dict, context) -> ScrapeResult:
     search_query = config.get("search_query")
-    return _process_platform_scrape("enjoei", config, search_enjoei, search_query)
+    return _process_platform_scrape("enjoei", config, search_enjoei, context, search_query)
+
+
+def process_locomotiva(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("locomotiva", config, search_locomotiva, context, search_query)
+
+
+def process_kiwi(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("kiwi", config, search_kiwi, context, search_query)
+
+
+def process_regards(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("regards", config, search_regards, context, search_query)
+
+
+def process_cdpoint(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("cdpoint", config, search_cdpoint, context, search_query)
+
+
+def process_fonoteca(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("fonoteca", config, search_fonoteca, context, search_query)
+
+
+def process_supernova(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("supernova", config, search_supernova, context, search_query)
+
+
+def process_discol(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("discol", config, search_discol, context, search_query)
+
+
+def process_music_house(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("music_house", config, search_music_house, context, search_query)
+
+
+def process_migranet(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("migranet", config, search_migranet, context, search_query)
+
+
+def process_umusicstore(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("umusicstore", config, search_umusicstore, context, search_query)
+
+
+def process_loja_discos(config: dict, context) -> ScrapeResult:
+    search_query = config.get("search_query")
+    return _process_platform_scrape("loja_discos", config, search_loja_discos, context, search_query)
 
 
 def send_digest():
@@ -297,38 +335,69 @@ def main():
 
     stats = {"success": 0, "error": 0, "skipped_fanmade": 0, "not_found": 0}
 
-    for cfg in configs.data:
-        platform = cfg["platform"]
-        logger.info("Processando %s (product_id=%s)", platform, cfg["product_id"])
-
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled"],
+        )
+        context = _make_stealth_context(browser)
         try:
-            if platform == "amazon":
-                result = process_amazon(cfg)
-            elif platform in ("amazon_us", "amazon_uk", "amazon_de"):
-                result = process_amazon_global(platform, cfg)
-            elif platform == "mercado_livre":
-                result = process_mercadolivre(cfg)
-            elif platform == "magalu":
-                result = process_magalu(cfg)
-            elif platform == "shopee":
-                result = process_shopee(cfg)
-            elif platform == "enjoei":
-                result = process_enjoei(cfg)
-            elif platform in ("americanas", "casas_bahia", "submarino", "carrefour", "extra"):
-                logger.warning("Scraper nao implementado para: %s", platform)
-                continue
-            else:
-                logger.warning("Plataforma desconhecida: %s", platform)
-                continue
+            for cfg in configs.data:
+                platform = cfg["platform"]
+                logger.info("Processando %s (product_id=%s)", platform, cfg["product_id"])
 
-            persist_result(result)
-            stats[result.status] = stats.get(result.status, 0) + 1
-        except Exception as e:
-            logger.error("Erro ao processar %s/%s: %s", cfg["product_id"], platform, e)
-            persist_result(ScrapeResult(cfg["id"], cfg["product_id"], "error", None, None, str(e)))
-            stats["error"] += 1
+                try:
+                    if platform == "amazon":
+                        result = process_amazon(cfg, context)
+                    elif platform in ("amazon_us", "amazon_uk", "amazon_de"):
+                        result = process_amazon_global(platform, cfg, context)
+                    elif platform == "mercado_livre":
+                        result = process_mercadolivre(cfg, context)
+                    elif platform == "magalu":
+                        result = process_magalu(cfg, context)
+                    elif platform == "shopee":
+                        result = process_shopee(cfg, context)
+                    elif platform == "enjoei":
+                        result = process_enjoei(cfg, context)
+                    elif platform == "locomotiva":
+                        result = process_locomotiva(cfg, context)
+                    elif platform == "kiwi":
+                        result = process_kiwi(cfg, context)
+                    elif platform == "regards":
+                        result = process_regards(cfg, context)
+                    elif platform == "cdpoint":
+                        result = process_cdpoint(cfg, context)
+                    elif platform == "fonoteca":
+                        result = process_fonoteca(cfg, context)
+                    elif platform == "supernova":
+                        result = process_supernova(cfg, context)
+                    elif platform == "discol":
+                        result = process_discol(cfg, context)
+                    elif platform == "music_house":
+                        result = process_music_house(cfg, context)
+                    elif platform == "migranet":
+                        result = process_migranet(cfg, context)
+                    elif platform == "umusicstore":
+                        result = process_umusicstore(cfg, context)
+                    elif platform == "loja_discos":
+                        result = process_loja_discos(cfg, context)
+                    elif platform in ("americanas", "casas_bahia", "submarino", "carrefour", "extra"):
+                        logger.warning("Scraper nao implementado para: %s", platform)
+                        continue
+                    else:
+                        logger.warning("Plataforma desconhecida: %s", platform)
+                        continue
 
-        time.sleep(1)
+                    persist_result(result)
+                    stats[result.status] = stats.get(result.status, 0) + 1
+                except Exception as e:
+                    logger.error("Erro ao processar %s/%s: %s", cfg["product_id"], platform, e)
+                    persist_result(ScrapeResult(cfg["id"], cfg["product_id"], "error", None, None, str(e)))
+                    stats["error"] += 1
+
+                time.sleep(1)
+        finally:
+            browser.close()
 
     logger.info("Pipeline concluido. Stats: %s", stats)
 

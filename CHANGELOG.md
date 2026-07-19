@@ -1,5 +1,84 @@
 # Changelog
 
+## [0.13.0] — 2026-07-18
+
+### Adicionado
+
+#### 7 novas lojas de CD brasileiras
+- `scraper/nuvemshop.py` — base scraper reutilizável para lojas Nuvemshop (JSON-LD + fallback HTML)
+- `scraper/fonoteca.py` — 🎶 Fonoteca (CD/MPB/Jazz) via Nuvemshop base
+- `scraper/supernova.py` — 💥 Supernova Discos (Rock/POP) via Nuvemshop base
+- `scraper/discol.py` — 🎯 Discol (CD/Vinil) via Nuvemshop base
+- `scraper/music_house.py` — 🎼 Music House Discos (CD/DVD desde 1979) via Nuvemshop base
+- `scraper/migranet.py` — 🌐 Migranet (CD/DVD importados) via Loja Integrada
+- `scraper/umusicstore.py` — 🎤 Universal Music Store (Vtex, via API de catálogo)
+- `scraper/loja_discos.py` — 🏪 A Loja de Discos (search + fallback categórico)
+- `scraper/main.py` — imports + dispatch para as 7 novas plataformas
+- `frontend/lib/platforms.ts` — 7 badges (FN/SN/DC/MH/MG/UM/LD) + icons
+- `supabase/schema.sql` — CHECK constraint atualizado com as 7 novas lojas
+- Migration `supabase/migration_7_new_stores.sql`
+
+## [0.11.0] — 2026-07-18
+
+### Adicionado
+
+#### 4 novos scrapers — Locomotiva, Kiwi, Regards, CD Point
+- `scraper/locomotiva.py` — httpx, Iluria (HTML limpo, sem browser). ✅ testado (3 resultados)
+- `scraper/kiwi.py` — Playwright, Nuvemshop
+- `scraper/regards.py` — Playwright, WooCommerce
+- `scraper/cdpoint.py` — Playwright, ASP.NET WebForms (preenche formulário de busca)
+- `scraper/main.py` — imports + dispatch para as 4 novas plataformas
+- `frontend/lib/platforms.ts` — locomotiva (🚂), kiwi (🥝), regards (🎵), cdpoint (💿) + badges LO/KW/RG/CP
+- `supabase/schema.sql` — `locomotiva`, `kiwi`, `regards`, `cdpoint` no CHECK constraint
+- Migration `supabase/migration_new_platforms.sql` executada e deletada (mesclada no schema.sql)
+
+### Testes
+- **51/51 testes unitários passando** (sem chamadas externas)
+- `next build` — 0 erros
+
+## [0.10.0] — 2026-07-18
+
+### Performance
+
+#### Reuso de Chromium (browser único)
+- `scraper/main.py` — todas as plataformas compartilham o mesmo browser+context em vez de abrir/fechar 5+ instâncias separadas por execução
+- `process_amazon()`, `process_amazon_global()`, `process_mercadolivre()`, `process_magalu()`, `process_shopee()`, `process_enjoei()` — agora recebem `context` como parâmetro
+- `main()` — `sync_playwright()` encapsula todo o pipeline, browser fechado no `finally`
+- Ganho estimado: de ~5min para ~2min em pipeline com todas plataformas ativas
+
+### Novas funcionalidades
+
+#### Mercado Livre — Fallback Firefox
+- `scraper/mercadolivre.py` — nova função `_scrape_mercadolivre_firefox()` que tenta Firefox quando Chromium é bloqueado por CAPTCHA
+- Firefox já passou do CAPTCHA em testes anteriores (caiu em verificação de conta, que é menos restritiva)
+- Ativado automaticamente: Chromium → detecta CAPTCHA → Firefox fallback
+
+#### TOCTOU — Sync atômico de plataformas
+- `supabase/schema.sql` — função `sync_product_platforms()` que substitui o antigo diff de 2 passos (leitura → deleta/insere) por uma única transação atômica
+- `frontend/app/api/albums/[id]/platforms/route.ts` — agora usa `supabase.rpc("sync_product_platforms", ...)` eliminando a race condition TOCTOU
+- Migrations incorporadas: `migration_toctou_platform_sync.sql` e `migration_confirmation_token_index.sql` deletados (conteúdo em `schema.sql`)
+
+#### Enjoei — Correção de busca
+- `scraper/enjoei.py` — 3 URLs de busca em cascata: `/s?q={}` → `/search?q={}` → `/@search?q={}&sid=`
+- `search_enjoei()` refatorada: extração movida para `_try_search_url()`, tenta cada URL até encontrar candidatos
+- `best_match()` agora recebe `artist` em vez de `search_query` (corrige matching)
+
+### Corrigido
+
+#### PriceCard — Moeda internacional
+- `frontend/components/price-card.tsx` — exibe símbolo correto por currency (R$, $, £, €) em vez de sempre "R$"
+- Interface `PriceItem` agora inclui `currency: string`
+
+#### Build — Resend no top-level quebrava `next build`
+- `frontend/app/api/subscribe/route.ts` — `new Resend(process.env.RESEND_API_KEY)` no **top-level** causava `Error: Missing API key` durante `next build` porque `.env.local` não é carregado no build
+- Corrigido: `getResend()` + `getSupabase()` como funções lazy, instanciadas apenas dentro do handler `POST`
+
+#### Dependências
+- `scraper/main.py` — removido `import` não utilizado de `tenacity` (retry, stop_after_attempt, wait_exponential)
+
+### Testes
+- **68/68 testes passando** (sem chamadas externas, todos mockados)
+
 ## [0.9.14] — 2026-07-08
 
 ### Segurança

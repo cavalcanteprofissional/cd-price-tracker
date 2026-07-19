@@ -9,7 +9,11 @@ from scraper.utils import normalize, token_similarity, best_match
 
 logger = logging.getLogger(__name__)
 
-ENJOEI_URL = "https://www.enjoei.com.br/s?q={}"
+ENJOEI_URLS = [
+    "https://www.enjoei.com.br/s?q={}",
+    "https://www.enjoei.com.br/search?q={}",
+    "https://www.enjoei.com.br/@search?q={}&sid=",
+]
 ENJOEI_PRODUCT_LINK = "a[href*='/p/'], a[href*='/produto/'], a[href*='/item/']"
 ENJOEI_WAIT_SELECTOR = (
     "a[href*='/p/'], a[href*='/produto/'], [class*='sc-'], "
@@ -327,14 +331,15 @@ def _extract_title_from_href(href: str) -> str:
 
 
 
-def search_enjoei(search_query: str, context) -> list[dict]:
+def _try_search_url(search_query: str, context, url_template: str) -> tuple[list[dict], list[dict]] | None:
+    """Tenta buscar em uma URL do Enjoei, retorna (candidates, api_results) ou None se falhar."""
     page = None
     try:
         page = context.new_page()
         page.set_default_timeout(45000)
 
-        url = ENJOEI_URL.format(quote(search_query))
-        logger.info("Enjoei: buscando '%s'", search_query)
+        url = url_template.format(quote(search_query))
+        logger.info("Enjoei: buscando '%s' em %s", search_query, url)
 
         api_results = []
         def handle_response(response):
@@ -393,17 +398,39 @@ def search_enjoei(search_query: str, context) -> list[dict]:
             logger.info("Enjoei: extracao por selector falhou, tentando page.evaluate")
             candidates = _extract_via_evaluate(page)
 
-        if not candidates:
-            logger.warning("Enjoei: nenhum candidato encontrado para '%s'", search_query)
-            return []
-
-        expected = search_query.replace(" cd original", "").replace(" cd", "")
-        best = best_match(candidates, expected, search_query)
-        return [best] if best else []
-
+        return candidates, api_results
     except Exception as e:
-        logger.error("Enjoei: erro na busca '%s': %s", search_query, e)
-        return []
+        logger.error("Enjoei: erro na busca em %s: %s", url_template, e)
+        return None
     finally:
         if page:
             page.close()
+
+
+def search_enjoei(search_query: str, context) -> list[dict]:
+    all_candidates = []
+    all_api_results = []
+
+    for url_template in ENJOEI_URLS:
+        result = _try_search_url(search_query, context, url_template)
+        if result is None:
+            continue
+        candidates, api_results = result
+        all_candidates.extend(candidates)
+        all_api_results.extend(api_results)
+        if candidates:
+            logger.info("Enjoei: encontrados candidatos com URL %s", url_template)
+            break
+
+    if not all_candidates:
+        logger.warning("Enjoei: nenhum candidato encontrado para '%s' em nenhuma URL", search_query)
+        return []
+
+    # Extrai artista da search_query (assume formato "titulo artista cd original")
+    query_parts = search_query.replace(" cd original", "").replace(" cd", "").split()
+    artist = query_parts[-1] if len(query_parts) > 1 else search_query
+    # Remove "cd original" do expected title
+    expected = search_query.replace(" cd original", "").replace(" cd", "")
+
+    best = best_match(all_candidates, expected, artist)
+    return [best] if best else []

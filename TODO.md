@@ -193,7 +193,76 @@
 
 ### Bugs encontrados (pendentes)
 
-_Nenhum no momento._
+- [ ] **Enjoei #191** — URL `/search?q={}` redireciona para `/@search?q={}&sid=` (busca de loja vs global); corrigido para `/s?q={}` + extração via API GraphQL `graphql-search-x`. **Continua sem achar produtos** — aguardando debug (Fase 10 #1)
+- [ ] **Resend build error** — `new Resend(process.env.RESEND_API_KEY)` no top-level de `subscribe/route.ts` quebra o `next build` porque a env var não está disponível durante build. Initialização lazy necessária.
+
+## Fase 11 — Correções de Build
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | **Resend lazy init** — `subscribe/route.ts`: `getResend()` + `getSupabase()` funções, sem top-level `new Resend()` | ✅ |
+| 2 | **Supabase client lazy init** — `createClient` não lança exceção sem env vars, não precisa de lazy init | ✅ |
+| 3 | **`confirm/route.ts` e `unsubscribe/route.ts`** — apenas Supabase, sem Resend. Seguros. | ✅ |
+
+## Fase 10 — Correções e Implementações (v0.10.0)
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | **Corrigir Enjoei** — múltiplas URLs de busca (3 tentativas), `best_match` corrigido (artist vs query), extração refatorada em `_try_search_url` | ✅ |
+| 2 | **Aplicar RLS no Supabase** — executar `supabase/rls.sql` no SQL Editor | ✅ |
+| 3 | **Reuso de Chromium** — contexto único compartilhado entre todas as plataformas (antes: 5+ browsers separados) | ✅ |
+| 4 | **Mercado Livre via Firefox** — fallback Firefox adicionado em `scrape_mercadolivre()` quando Chromien detecta CAPTCHA | ✅ |
+| 5 | **TOCTOU — Sync de plataformas** — função `sync_product_platforms()` + RPC no lugar do diff manual (transação atômica) | ✅ |
+| 6 | **Exibir moeda correta no PriceCard** — `price-card.tsx` agora respeita currency (R$, $, £, €) | ✅ |
+| 7 | **Índice `confirmation_token`** — incorporado em `schema.sql` | ✅ |
+| 8 | **Lojas não implementadas** — americanas, casas_bahia, submarino, carrefour, extra: remover do CHECK constraint ou implementar | ⏳ |
+
+## Fase 15 — Curadoria de 7 Lojas (v0.13.0)
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | **Base Nuvemshop** — `nuvemshop.py` reutilizável + 4 lojas (Fonoteca, Supernova, Discol, Music House) | ✅ |
+| 2 | **Migranet** — `migranet.py` (httpx, Loja Integrada) | ✅ |
+| 3 | **Universal Music Store** — `umusicstore.py` (httpx, Vtex API) | ✅ |
+| 4 | **A Loja de Discos** — `loja_discos.py` (httpx, custom + categoria) | ✅ |
+| 5 | **main.py** — imports + dispatch para as 7 novas | ✅ |
+| 6 | **platforms.ts** — 7 badges (FN/SN/DC/MH/MG/UM/LD) + icons | ✅ |
+| 7 | **schema.sql** — CHECK constraint + migration executada | ✅ |
+| 8 | **CHANGELOG.md + README.md** — docs atualizadas | ✅ |
+| 9 | Build (0 erros) | ✅ |
+
+## Fase 14 — UI/UX Login (v0.12.1)
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | **admin-auth.tsx** — ícone olho para exibir/ocultar senha | ✅ |
+| 2 | Verificar build | ✅ (0 erros) |
+
+## Fase 13 — Padronização de Modais (v0.12.0)
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | **ConfirmModal** — componente reutilizável de confirmação (overlay escuro, título, mensagem, ações) | ✅ |
+| 2 | **Toast** — componente de notificação (success/error/info, auto-dismiss 4s, canto inferior direito) | ✅ |
+| 3 | **gerenciar/page.tsx** — substituir `confirm()`/`alert()` por ConfirmModal + Toast, adicionar feedback de sucesso | ✅ |
+| 4 | **gerenciar/page.tsx** — botão "Sair" que limpa `sessionStorage` e desloga | ✅ |
+| 5 | Verificar build | ⏳ |
+
+## Fase 12 — Novos Scrapers (v0.11.0)
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | **Locomotiva Discos** — `scraper/locomotiva.py` (httpx, Iluria HTML limpo) | ✅ (testado — 3 resultados para "pink floyd the wall") |
+| 2 | **Kiwi Discos** — `scraper/kiwi.py` (Playwright, Nuvemshop) | ✅ |
+| 3 | **Regards** — `scraper/regards.py` (Playwright, WooCommerce) | ✅ |
+| 4 | **CD Point** — `scraper/cdpoint.py` (Playwright, ASP.NET WebForms) | ✅ |
+| 5 | Registrar plataformas no frontend (`platforms.ts`) + badges | ✅ |
+| 6 | Atualizar CHECK constraint no schema.sql | ✅ |
+| 7 | Integrar dispatch em `main.py` | ✅ |
+| 8 | Testar scrapers (unitários) + build | ✅ (51/51 testes, build 0 erros) |
+| 9 | Executar migration no Supabase | ✅ |
+| 10 | Testar Kiwi/Regards/CD Point com Playwright | ❌ Pendente (exige browser) |
+| 11 | **AdminAuth com validação** — `admin-auth.tsx` testa token contra servidor antes de aceitar | ✅ |
 
 ### Melhorias de segurança e qualidade (v0.9.14)
 

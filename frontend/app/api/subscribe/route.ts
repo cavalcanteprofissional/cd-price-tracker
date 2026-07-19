@@ -3,12 +3,18 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { randomUUID } from "crypto";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
+}
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!,
+  );
+}
 
 const recentSubscriptions = new Map<string, number>();
 
@@ -35,6 +41,7 @@ export async function POST(request: NextRequest) {
     const confirmationToken = randomUUID();
     const unsubscribeToken = randomUUID();
 
+    const supabase = getSupabase();
     const { error: insertError } = await supabase
       .from("subscribers")
       .insert({
@@ -52,6 +59,12 @@ export async function POST(request: NextRequest) {
         );
       }
       throw insertError;
+    }
+
+    const resend = getResend();
+    if (!resend) {
+      console.warn("Resend não configurado (RESEND_API_KEY ausente)");
+      return NextResponse.json({ message: "Email cadastrado com sucesso!" });
     }
 
     const confirmUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/confirm?token=${confirmationToken}`;

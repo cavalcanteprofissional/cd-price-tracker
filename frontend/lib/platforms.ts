@@ -15,6 +15,17 @@ export const ALL_PLATFORMS: Platform[] = [
   { id: "casas_bahia", label: "Casas Bahia", icon: "🔴" },
   { id: "shopee", label: "Shopee", icon: "🛍️" },
   { id: "enjoei", label: "Enjoei", icon: "💛" },
+  { id: "locomotiva", label: "Locomotiva Discos", icon: "🚂" },
+  { id: "kiwi", label: "Kiwi Discos", icon: "🥝" },
+  { id: "regards", label: "Regards", icon: "🎵" },
+  { id: "cdpoint", label: "CD Point", icon: "💿" },
+  { id: "fonoteca", label: "Fonoteca", icon: "🎶" },
+  { id: "supernova", label: "Supernova Discos", icon: "💥" },
+  { id: "discol", label: "Discol", icon: "🎯" },
+  { id: "music_house", label: "Music House Discos", icon: "🎼" },
+  { id: "migranet", label: "Migranet", icon: "🌐" },
+  { id: "umusicstore", label: "Universal Music Store", icon: "🎤" },
+  { id: "loja_discos", label: "A Loja de Discos", icon: "🏪" },
 ];
 
 export const PLATFORM_LABELS: Record<string, string> = Object.fromEntries(
@@ -36,4 +47,15 @@ export const PLATFORM_BADGES: Record<string, string> = {
   casas_bahia: "CB",
   shopee: "SP",
   enjoei: "EN",
+  locomotiva: "LO",
+  kiwi: "KW",
+  regards: "RG",
+  cdpoint: "CP",
+  fonoteca: "FN",
+  supernova: "SN",
+  discol: "DC",
+  music_house: "MH",
+  migranet: "MG",
+  umusicstore: "UM",
+  loja_discos: "LD",
 };

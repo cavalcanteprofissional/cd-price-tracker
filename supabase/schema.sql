@@ -27,7 +27,7 @@ create table products (
 create table product_platform_config (
   id uuid primary key default gen_random_uuid(),
   product_id uuid references products(id) on delete cascade,
-  platform text not null check (platform in ('amazon', 'amazon_us', 'amazon_uk', 'amazon_de', 'mercado_livre', 'shopee', 'magalu', 'enjoei', 'americanas', 'casas_bahia', 'submarino', 'carrefour', 'extra')),
+  platform text not null check (platform in ('amazon', 'amazon_us', 'amazon_uk', 'amazon_de', 'mercado_livre', 'shopee', 'magalu', 'enjoei', 'americanas', 'casas_bahia', 'submarino', 'carrefour', 'extra', 'locomotiva', 'kiwi', 'regards', 'cdpoint', 'fonoteca', 'supernova', 'discol', 'music_house', 'migranet', 'umusicstore', 'loja_discos')),
   amazon_url text,
   search_query text,
   active boolean default true,
@@ -91,3 +91,24 @@ create index idx_subscribers_confirmation on subscribers(confirmation_token);
 create index idx_subscribers_unsubscribe on subscribers(unsubscribe_token);
 create index idx_scrape_log_status on scrape_log(status);
 create index idx_scrape_log_product on scrape_log(product_platform_config_id);
+
+-- ----------------------------------------
+-- Função TOCTOU-safe para sync de plataformas
+-- ----------------------------------------
+create or replace function sync_product_platforms(
+    p_product_id uuid,
+    p_platforms text[]
+) returns void
+language plpgsql
+security definer
+as $$
+begin
+    delete from product_platform_config
+    where product_id = p_product_id
+      and platform not in (select unnest(p_platforms));
+
+    insert into product_platform_config (product_id, platform, amazon_url, search_query)
+    select p_product_id, unnest(p_platforms), null, null
+    on conflict (product_id, platform) do nothing;
+end;
+$$;
