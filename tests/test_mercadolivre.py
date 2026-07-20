@@ -1,5 +1,58 @@
 import pytest
-from scraper.mercadolivre import scrape_mercadolivre
+from scraper.mercadolivre import scrape_mercadolivre, _extract_from_api_public
+
+
+@pytest.fixture(autouse=True)
+def _no_sleep(mocker):
+    mocker.patch("scraper.mercadolivre.time.sleep")
+
+
+class TestExtractFromApiPublic:
+    def test_success(self, mocker):
+        mock_resp = mocker.MagicMock()
+        mock_resp.json.return_value = {
+            "results": [
+                {"title": "CD Thriller Michael Jackson Original", "price": 79.90, "permalink": "https://mercadolivre.com.br/produto/123", "seller": {"nickname": "Vendedor XYZ"}},
+                {"title": "CD Thriller Edicao Especial", "price": 99.90, "permalink": "https://mercadolivre.com.br/produto/456"},
+            ]
+        }
+        mocker.patch("scraper.mercadolivre.httpx.get", return_value=mock_resp)
+
+        results = _extract_from_api_public("Thriller Michael Jackson")
+        assert results is not None
+        assert len(results) == 2
+        assert results[0]["title"] == "CD Thriller Michael Jackson Original"
+        assert results[0]["seller_name"] == "Vendedor XYZ"
+        assert results[1]["seller_name"] is None
+
+    def test_empty_results(self, mocker):
+        mock_resp = mocker.MagicMock()
+        mock_resp.json.return_value = {"results": []}
+        mocker.patch("scraper.mercadolivre.httpx.get", return_value=mock_resp)
+
+        results = _extract_from_api_public("nonexistent")
+        assert results is None
+
+    def test_skip_missing_title(self, mocker):
+        mock_resp = mocker.MagicMock()
+        mock_resp.json.return_value = {
+            "results": [
+                {"price": 50.00, "permalink": "https://mercadolivre.com.br/p/1"},
+                {"title": "CD Valido", "price": 30.00, "permalink": "https://mercadolivre.com.br/p/2"},
+            ]
+        }
+        mocker.patch("scraper.mercadolivre.httpx.get", return_value=mock_resp)
+
+        results = _extract_from_api_public("test")
+        assert results is not None
+        assert len(results) == 1
+        assert results[0]["title"] == "CD Valido"
+
+    def test_exception_returns_none(self, mocker):
+        mocker.patch("scraper.mercadolivre.httpx.get", side_effect=Exception("API error"))
+
+        results = _extract_from_api_public("test")
+        assert results is None
 
 
 class TestScrapeMercadoLivre:

@@ -2,6 +2,11 @@ import pytest
 from scraper.shopee import _extract_from_api, _extract_from_page, scrape_shopee
 
 
+@pytest.fixture(autouse=True)
+def _no_sleep(mocker):
+    mocker.patch("scraper.shopee.time.sleep")
+
+
 class TestExtractFromApi:
     def test_success(self, mocker):
         mock_resp = mocker.MagicMock()

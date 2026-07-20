@@ -195,6 +195,7 @@
 
 - [ ] **Enjoei #191** — URL `/search?q={}` redireciona para `/@search?q={}&sid=` (busca de loja vs global); corrigido para `/s?q={}` + extração via API GraphQL `graphql-search-x`. **Continua sem achar produtos** — aguardando debug (Fase 10 #1)
 - [ ] **Resend build error** — `new Resend(process.env.RESEND_API_KEY)` no top-level de `subscribe/route.ts` quebra o `next build` porque a env var não está disponível durante build. Initialização lazy necessária.
+- [ ] **Botão "▶ Rodar" não aparece após login** — `ScrapeButton` lê `admin_token` do `sessionStorage` apenas no `useEffect` de montagem. Como o componente está no layout (persiste entre navegações), o login feito em `/gerenciar` nunca reativa o botão — só aparece após refresh da página. Corrigido com listener `focus`/`storage` que sincroniza o token reativamente.
 
 ## Fase 11 — Correções de Build
 

@@ -10,6 +10,28 @@
 - **`scraper/main.py:47`** — `auto_search_query` sem sufixo "cd original", que poluía a busca em lojas especializadas.
 - **`scraper/main.py:229`** — Mesma correção do `best_match` no caminho da API do Mercado Livre.
 
+#### Frontend — Botão "▶ Rodar" não aparecia após login
+- `frontend/components/scrape-button.tsx` — `ScrapeButton` lia `admin_token` do `sessionStorage` apenas no `useEffect` de montagem. Como o componente está no *layout* (persiste entre navegações), o login feito em `/gerenciar` nunca reativava o botão — só aparecia após refresh. Adicionado listener `focus`/`storage` que sincroniza o token reativamente.
+
+### Testes
+
+#### 7 novos arquivos de teste para scrapers (v0.13.0)
+- `test_amazon_global.py` — 7 testes (MARKETPLACES config, scoring logic)
+- `test_enjoei.py` — 14 testes (`_extract_from_api`, `_extract_title_from_href`)
+- `test_locomotiva.py` — 3 testes (`search_locomotiva` com mock httpx)
+- `test_loja_discos.py` — 8 testes (`_parse_products`: HTML tags, preço, duplicatas)
+- `test_migranet.py` — 5 testes (`search_migranet`: HTML, data attribute, erro)
+- `test_nuvemshop.py` — 12 testes (`_extract_from_html`: JSON-LD, containers, fallback)
+- `test_umusicstore.py` — 10 testes (`_try_api`: Vtex API, vendedor, duplicatas)
+
+#### Testes existentes — aprimorados
+- `test_main.py` — `auto_search_query` sem sufixo "cd original" (reflete correção do matching)
+- `test_amazon.py` — `autouse` fixture `_no_sleep` que mocka `time.sleep` (elimina delays reais)
+- `test_mercadolivre.py` — 4 novos testes para `_extract_from_api_public` (success, empty, skip missing title, exception) + `_no_sleep` fixture
+- `test_shopee.py` — `_no_sleep` fixture adicionada
+
+- **177/177 testes passando** (unitários, sem chamadas externas, sem `time.sleep` real)
+
 ## [0.13.0] — 2026-07-18
 
 ### Adicionado

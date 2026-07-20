@@ -3,6 +3,11 @@ from scraper.utils import normalize, token_similarity
 from scraper.amazon import scrape_amazon, search_amazon
 
 
+@pytest.fixture(autouse=True)
+def _no_sleep(mocker):
+    mocker.patch("scraper.amazon.time.sleep")
+
+
 class TestNormalize:
     def test_lowercase(self):
         assert normalize("Thriller") == "thriller"

@@ -1,4 +1,4 @@
-# 💿 CD Price Tracker <sup><sub>v0.13.0</sub></sup>
+# 💿 CD Price Tracker <sup><sub>v0.13.1</sub></sup>
 
 Acompanhe os preços dos seus CDs favoritos em várias lojas brasileiras. Scraping automático todo dia, histórico em gráfico, e um painel pra você gerenciar sua coleção.
 
@@ -175,7 +175,7 @@ Filtrar por artista: [Michael Jackson] [Pink Floyd] [Radiohead]
 | Banco de dados | Supabase (free tier — Postgres + RLS + API) |
 | Validação de álbuns | Last.fm API |
 | Frontend | Next.js 14 (App Router) + Recharts |
-| Testes | Pytest (51 unit + mock, zero chamadas externas) |
+| Testes | Pytest (177 unit + mock, zero chamadas externas) |
 | Notificações | Resend (futuro) |
 
 ## 📁 Estrutura do projeto
@@ -278,7 +278,7 @@ A home exibe todos os CDs em um grid responsivo. Cada card mostra a capa, o arti
 
 ## 🧪 Testes
 
-**116 testes**. Zero chamadas externas. Tudo mockado com pytest-mock.
+**177 testes**. Zero chamadas externas. Tudo mockado com pytest-mock.
 
 | Arquivo | O que testa |
 |---|---|

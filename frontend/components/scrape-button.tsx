@@ -77,6 +77,20 @@ export default function ScrapeButton() {
     isFirstRender.current = false;
   }, []);
 
+  // Sincroniza token do sessionStorage quando a aba ganha foco ou
+  // sessionStorage muda (cobre login/logout sem refresh)
+  useEffect(() => {
+    function syncToken() {
+      setToken(sessionStorage.getItem("admin_token"));
+    }
+    window.addEventListener("focus", syncToken);
+    window.addEventListener("storage", syncToken);
+    return () => {
+      window.removeEventListener("focus", syncToken);
+      window.removeEventListener("storage", syncToken);
+    };
+  }, []);
+
   // Elapsed timer for button label
   useEffect(() => {
     if (status !== "running" || !startedAt) return;
